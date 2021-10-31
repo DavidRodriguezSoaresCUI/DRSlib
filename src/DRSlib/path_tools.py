@@ -33,18 +33,13 @@ class FileCollector:
         root.resolve()
         self.root = root
         self.log = logging.getLogger( __file__ )
-        self.log.debug( "root : %s", root )
+        self.log.debug( "root=%s", root )
 
     def collect( self, pattern: Union[str,Iterable[str]] = '**/*.*' ) -> List[Path]:
         ''' Collect files matching given pattern(s) '''
         files = []
-
-        if isinstance( pattern, Iterable ):
-            patterns = pattern
-            assert 0 < len(patterns)
-            for p in patterns:
-                files.extend( self.collect(p) )
-        elif isinstance( pattern, str ):
+        
+        if isinstance( pattern, str ):
             # 11/11/2020 BUGFIX : was collecting files in trash like a cyber racoon
             files = [
                 item.resolve() 
@@ -53,6 +48,11 @@ class FileCollector:
             ]
 
             self.log.debug( "\t'%s': Found %s files in %s", pattern, len(files), self.root )
+        elif isinstance( pattern, Iterable ):
+            patterns = pattern
+            assert 0 < len(patterns)
+            for p in patterns:
+                files.extend( self.collect(p) )
         else:
             raise ValueError(f"FileCollector: 'pattern' ({pattern}) must be an Iterable or a string, but is a {type(pattern)}")
 
@@ -64,7 +64,7 @@ def file_collector( root: Path, pattern: Union[str,Iterable[str]] = '**/*.*' ) -
     Collect files matching given pattern(s) '''
     assert root.is_dir()
     root.resolve()
-    log.debug( "root : %s", root )
+    log.debug( "root=%s", root )
 
     def collect( _pattern: str ) -> List[Path]:
         # 11/11/2020 BUGFIX : was collecting files in trash like a cyber racoon
@@ -77,13 +77,13 @@ def file_collector( root: Path, pattern: Union[str,Iterable[str]] = '**/*.*' ) -
         return _files
 
     files = []
-    if isinstance( pattern, Iterable ):
+    if isinstance( pattern, str ):
+        files = collect( pattern )
+    elif isinstance( pattern, Iterable ):
         patterns = pattern
         assert 0 < len(patterns)
         for p in patterns:
             files.extend( collect(p) )
-    elif isinstance( pattern, str ):
-        files = collect( pattern )
     else:
         raise ValueError(f"FileCollector: 'pattern' ({pattern}) must be an Iterable or a string, but is a {type(pattern)}")
 

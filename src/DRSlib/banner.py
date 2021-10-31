@@ -91,7 +91,7 @@ def multi_line_banner( title: str, style: Union[str,Callable] = 'full', width:in
     return banner + '\n'
 
 
-def bannerize( style: Union[Callable,str], width: Optional[int] = None, one_line: bool = False ) -> Callable:
+def bannerize( style: Union[Callable,str], width: int = DEFAULT_BANNER_WIDTH, one_line: bool = False ) -> Callable:
     ''' Decorator. Adds a banner before function's execution. Not intended nor tested for decorating classes.
     
     When `style` is given and is a callable formatter, it will be used to produce banner, otherwise `style`
