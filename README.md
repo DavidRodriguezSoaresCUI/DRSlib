@@ -18,6 +18,10 @@ You can install DRSlib using the pip package manager:
 
 You may need to use elevated permissions to install a package, or use a variation of this command on your specific system. There are plenty of tutorials on the Internet if you need help.
 
+## Versioning
+
+This package adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440), specifically follows version scheme example `"major.minor" versioning with developmental releases, release candidates and post-releases for minor corrections`.
+
 
 ## Packaging
 
