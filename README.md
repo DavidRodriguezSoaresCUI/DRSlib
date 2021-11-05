@@ -25,7 +25,7 @@ This package adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440), spe
 
 ## Packaging
 
-I followed [this python.org tutorial](https://packaging.python.org/tutorials/packaging-projects/).
+I followed [this python.org tutorial](https://packaging.python.org/tutorials/packaging-projects/). See the [package page on Pypi](https://pypi.org/project/DRSlib-DavidRodriguezSoaresCUI/)
 
 
 ## TODO
