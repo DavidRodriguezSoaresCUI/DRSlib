@@ -122,13 +122,20 @@ def find_available_path( root: Path, base_name, file: bool ) -> Path:
     
     # Iterate over candidate paths until an unused one is found
     safe_base_name = make_FS_safe( base_name )
-    for suffix in suffixes():
-        _object = root / ( safe_base_name + suffix )
-        if file:
+    if file:
+        # name formatting has to keep the extension at the end of the name !
+        ext_idx = safe_base_name.rfind('.')
+        assert ext_idx!=-1
+        f_name, f_ext = safe_base_name[:ext_idx], safe_base_name[ext_idx:]
+        for suffix in suffixes():
+            _object = root / ( f_name + suffix + f_ext )
             if not _object.is_file():
                 return _object
-        elif not _object.is_dir():
-            return _object
+    else:
+        for suffix in suffixes():
+            _object = root / ( safe_base_name + suffix )
+            if not _object.is_dir():
+                return _object
 
 
 def make_valid_path( 
@@ -164,6 +171,10 @@ def make_valid_path(
             safe_path_part = make_FS_safe(path_part)
             assert safe_path_part
             _root = _root / safe_path_part
+    elif isinstance(root, Path):
+        _root = root
+    else:
+        raise TypeError(f"root={root} is of unexpected type {type(root)}, not str or Path !")
             
     # make root directory
     if not _root.is_dir():
@@ -184,4 +195,3 @@ def make_valid_path(
             valid_path.mkdir()
 
     return valid_path
-        
