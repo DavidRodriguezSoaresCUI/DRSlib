@@ -1,4 +1,4 @@
-# DRSlib - a set of utilities by DavidRodriguezSoaresCUI
+# [DRSlib - a set of utilities by DavidRodriguezSoaresCUI](https://github.com/DavidRodriguezSoaresCUI/DRSlib)
 
 DRSlib is a Python package that provides a wide range of small
 yet powerful set of highly-reusable functions, classes, 
