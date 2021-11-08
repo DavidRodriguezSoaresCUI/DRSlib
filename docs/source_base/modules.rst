@@ -12,7 +12,9 @@ Find below links to documentation for each DRSlib submodule.
    DRSlib.decorators
    DRSlib.execute
    DRSlib.fsdb
+   DRSlib.hash
    DRSlib.interval
+   DRSlib.mediainfo
    DRSlib.os_detect
    DRSlib.path_tools
    DRSlib.spinner
