@@ -9,13 +9,6 @@ Also, you can find :
  - a structure convention for all function decorators
  - tests for each decorator (see at the bottom of the file; run the file to execute them)
 
-API:
-    - timer
-    - profile
-    - log_to_file
-    - cacheFS
-
-See elements' docstrings for further explanations.
 '''
 
 from typing import Any, Callable

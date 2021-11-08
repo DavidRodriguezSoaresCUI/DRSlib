@@ -7,11 +7,6 @@ String-focused utils
 
 Simple utils that accomplish one task well, specifically string operations.
 
-API:
-    - ensure_double_quotes
-    - truncate_str
-
-See elements' docstrings for further explanations.
 '''
  
 import re

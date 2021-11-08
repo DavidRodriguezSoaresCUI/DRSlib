@@ -1,25 +1,25 @@
-﻿# pylint: disable=too-few-public-methods
+﻿# pylint: disable=too-few-public-methods, import-error, wrong-import-order, broad-except
 
 # module-level docstring
 __doc__='''
-FileSystemDataBase
-==================
+Path tools
+==========
 
 Easy to use tool to collect files matching a pattern.
 
 Note: both class and function versions should be euivalent, both kept
 just in case. Class may be usefull for repeated calls to `collect` method.
 
-API:
-    - FileCollector
-    - file_collector
-
-See elements' docstrings for further explanations.
 '''
 
 from typing import Union, Iterable, List
 from pathlib import Path
+from os import popen
 import re
+import sys
+import win32api
+from .os_detect import Os
+from .execute import execute
 import logging
 log = logging.getLogger( __file__ )
 
@@ -95,8 +95,10 @@ def file_collector( root: Path, pattern: Union[str,Iterable[str]] = '**/*.*' ) -
 
 def make_FS_safe( s: str ) -> str:
     ''' File Systems don't accept all characters on file/directory names.
+
     Return s with illegal characters stripped
-    Note: OS/FS agnostic, applies a simple filter on characters: backslash, /, *, ?, :, ", <, >, |
+
+    Note: OS/FS agnostic, applies a simple filter on characters: ``\\, /, *, ?, :, ", <, >, |``
     '''
     return re.sub(
         pattern=MAKE_FS_SAFE_PATTERN,
@@ -177,8 +179,7 @@ def make_valid_path(
         raise TypeError(f"root={root} is of unexpected type {type(root)}, not str or Path !")
             
     # make root directory
-    if not _root.is_dir():
-        _root.mkdir( parents=True )
+    ensure_dir_exists( _root )
 
     # Find valid path
     valid_path = find_available_path(
@@ -195,3 +196,114 @@ def make_valid_path(
             valid_path.mkdir()
 
     return valid_path
+
+
+def ensure_dir_exists( folder: Path ) -> None:
+    ''' Tests whether `folder` exists, creates it (and its whole path) if it doesn't.
+    '''
+    if folder.is_file():
+        raise ValueError(f"Given path '{folder}' is a file !")
+    if not folder.is_dir():
+        folder.mkdir( parents=True )
+
+
+def folder_get_file_count( _root: Path, use_fallback: bool = False ) -> int:
+    ''' Uses built-in platform-specific ways to recursively count the number of files in a given directory.
+    Reason for using CLI calls to platform-specific external tools : they typically offer superior performance (because optimised)
+
+    `use_fallback` : if True, use Path.glob instead of platform-specific CLI calls (mainly for testing puposes)
+    '''
+    _root = _root.resolve()
+
+    def fallback() -> int:
+        return sum( 1 for x in _root.glob('**/*') if x.is_file() )
+
+    if use_fallback:
+        return fallback()
+
+    current_os = Os()
+    command = None
+    if current_os.windows:
+        # Windows CMD
+        log.debug("Crawler from '%s'", _root)
+        command = f"dir \"{_root}\" /A:-D /B /S | find \".\" /C"
+    elif current_os.wsl or current_os.linux:
+        # Linux
+        log.debug("Crawler from '%s'", _root)
+        command = f"find \"{_root}\" -type f|wc -l"
+    else:
+        log.warning( "OS not recognised or has no specific command set (%s); fallback method used.", current_os )
+        return fallback()
+
+    
+    return int(popen( command ).read().strip())
+
+
+def folder_get_subdirs( root_dir: Path ) -> List[Path]:
+    ''' Return a list of first level subdirectories '''
+    assert root_dir.is_dir()
+    return [ 
+        item
+        for item in root_dir.resolve().iterdir()
+        if item.is_dir() and (not '$RECYCLE.BIN' in item.parts)
+    ]
+
+
+def windows_list_logical_drives() -> List[Path]:
+    ''' Uses windows-specific methods to retrieve a list of logical drives.
+
+    Both methods have been developped and tested to give equivalent output and be interchangeable
+    '''
+    
+    def method1():
+        ''' uses a windows shell command to list drives '''
+        try:
+
+            def filter_drives( l ):
+                for item in l:
+                    if not item:
+                        continue
+                    try:
+                        yield Path(item).resolve()
+                    except Exception:
+                        continue
+
+            drives = list( 
+                filter_drives( win32api.GetLogicalDriveStrings().split('\x00') ) 
+            )
+            return drives
+        except ImportError as e:
+            print(f"windows_list_logical_drives: ImportError raised, so you may have tried using this function on a non-windows system, or the `pypiwin32` package is missing : {e}")
+            exit(1)
+    
+    def method2():
+        ''' uses a windows shell command to list drives '''
+        command = [ 'wmic', 'logicaldisk', 'get', 'name' ]
+        stdout = execute( command )['stdout']
+
+        def return_cleaned( l ):
+            for item in l:
+                if len(item) < 2:
+                    continue
+                if item[0].isupper() and item[1] == ':':
+                    try:
+                        # Bugfix : the '<driveletter>:' format was resolving to CWD when driveletter==CWD's driveletter. 
+                        # This seems to be an expected Windows behavior. Fix: switch to '<driveletter>:\\' format, whis is more appropriate.
+                        yield Path(item[:2]+'\\').resolve()
+                    except Exception:
+                        continue
+        
+        drives = list( return_cleaned(stdout.splitlines()) )
+        return drives
+    
+    # Test
+    # assert all( [ x.samefile(y) for x,y in zip(method1(),method2()) ] )
+    
+    try:
+        return method1()
+    except Exception:
+        try:
+            return method2()
+        except Exception as e:
+            print(f"windows_list_logical_drives: something went wrong : {e}")
+            sys.exit(1)

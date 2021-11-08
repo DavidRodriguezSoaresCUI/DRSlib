@@ -7,19 +7,12 @@ Banners are text elements used in CLI interfaces. They use is
 mostly for easthetic purposes. This module provides banner 
 generators and a wrapper (to bannerize functions/classes)
 
-API:
-    - one_line_banner
-    - multi_line_banner
-    - bannerize
-
-See elements' docstrings for further explanations.
-
 On formatters: two are provided
 All formatters should have signature `( title: str, width: int = DEFAULT_BANNER_WIDTH, one_line: bool = False ) -> str`
 (or compatible) and (for formatters in banner.py) have an entry in global dictionnary `style_switch`.
 '''
  
-from typing import Callable, Any, Union, Optional
+from typing import Callable, Any, Union
 import functools
 import shutil
 from pathlib import Path

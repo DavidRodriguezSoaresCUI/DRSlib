@@ -3,12 +3,7 @@ __doc__='''
 Interval representation implementation
 ======================================
 
-A simple implementation for generic intervals
-
-API:
-    - Interval
-
-See elements' docstrings for further explanations.
+A simple implementation for generic intervals.
 '''
 
 

@@ -7,11 +7,6 @@ Shell command execution
 
 Sometimes we just want to execute a shell command and possibly
 retrieve stdout/stderr, without hassle.
-
-API:
-    - execute
-
-See elements' docstrings for further explanations.
 '''
 
 from typing import Iterable, Dict, Union

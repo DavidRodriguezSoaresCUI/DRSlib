@@ -35,14 +35,17 @@ def func_attribute_printout( user_funtion: Callable ) -> None:
     ''' Prints relevant attributes of `user_function`, with attribute name, value and type.
     Relevant attributes are in `FUNC_RELEVANT_ATTR`.
 
-    Usage example: reviewing an unfamiliar imported function
-    ```
-    >>> from some.module import foo
-    >>> func_attribute_printout( foo )
-    foo.__annotations__ = ...
-    [...]
-    foo.__qualname__ = foo, type=str
-    ```
+    Usage example: reviewing an unfamiliar imported function::
+    
+        from some.module import foo
+        func_attribute_printout( foo )
+    
+    Output::
+
+        foo.__annotations__ = ...
+        [...]
+        foo.__qualname__ = foo, type=str
+        
     '''
     f_name = user_funtion.__name__
     for attr in dir(user_funtion):
@@ -65,31 +68,33 @@ def debug_var( var: Any, var_name: str = None ) -> None:
     add it manually. This feature was inspired by code snippets from 
     https://stackoverflow.com/questions/2749796/how-to-get-the-original-variable-name-of-variable-passed-to-a-function
 
-    Usage example : you want to add a sanity check to a received value
-    ```
-    ...
-    res = do_something()
-    debug_var( res )
-    ...
-    ```
-    >>> DEBUG VAR: res=[1999, 2011] (list)
+    Usage example : you want to add a sanity check to a received value::
+    
+        ...
+        res = do_something()
+        debug_var( res )
+        ...
+
+    Output::
+    
+        >>> DEBUG VAR: res=[1999, 2011] (list)
 
     Note : during development a different method for retrieving var_name automatically
     was found. It used the stack module. Unfortunately it was found to be
     significantly slower and to not have any significant advantage so it was removed.
-    You can find the implementation here below :
-    ```
-    # inspect method : similar but extract locals from frame(s) and try to find
-    stack = inspect.stack()[2:]
-    for frameinfos in stack:
-        lcls = frameinfos.frame.f_locals
-        for name in lcls:
-            if id(var) == id(lcls[name]):
-                var_name = name
+    You can find the implementation here below::
+    
+        # inspect method : similar but extract locals from frame(s) and try to find
+        stack = inspect.stack()[2:]
+        for frameinfos in stack:
+            lcls = frameinfos.frame.f_locals
+            for name in lcls:
+                if id(var) == id(lcls[name]):
+                    var_name = name
+                    break
+            if var_name:
                 break
-        if var_name:
-            break
-    ```
+    
 
     Performance : tested on a AMD 1700 using the standard Python 3.9 interpreter,
     which used only 1 execution thread. Executed 10 iteration in ~2ms and 100'000
@@ -118,17 +123,21 @@ def call_progress( expected_argument: Union[Callable,str] ) -> Callable:
     `expected_argument`: Optional string argument, replaces the default
     message (user_function.__name__).
 
-    Usage example: decorating debug_var (see warning in debug_var's docstring)
-    ```
-    >>> decorated_debug_var = call_progress("debug_var debugs a variable")(debug_var)
-    >>> hello='world'
-    >>> decorated_debug_var( var=hello, var_name='hello' )
-    ----------------------------------------
-    debug_var debugs a variable ..
-    DEBUG VAR: hello=world (<class 'str'>)
-    debug_var debugs a variable done
-    ----------------------------------------
-    ```
+    Usage example: decorating debug_var (see warning in debug_var's docstring)::
+    
+        decorated_debug_var = call_progress("debug_var debugs a variable")(debug_var)
+        hello='world'
+        decorated_debug_var( var=hello, var_name='hello' )
+
+    Output::
+
+        ----------------------------------------
+        debug_var debugs a variable ..
+        DEBUG VAR: hello=world (<class 'str'>)
+        debug_var debugs a variable done
+        ----------------------------------------
+    
+    
     Note: this example is not great: decorating manually (not with @call_progress syntax)
     and decorating a function that specifically advises against decoration. But this showcases
     an actual use case that works.

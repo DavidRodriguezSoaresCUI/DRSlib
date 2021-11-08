@@ -28,7 +28,10 @@ This package adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440), spe
 I followed [this python.org tutorial](https://packaging.python.org/tutorials/packaging-projects/). See the [package page on Pypi](https://pypi.org/project/DRSlib-DavidRodriguezSoaresCUI/)
 
 
-## TODO
+## Documentation
 
-- Tests
-- Documentation 
+You can find documentation in source code docstrings, or, more practically, by building
+documentation from source:
+
+- On `Windows`: Run `sphinx-full-rebuild.bat` from directory `docs`
+- On `Linux`: If your shell is bash compatible, run `sphinx-full-rebuild.sh` from directory `docs`. If not, you should be capable of adapting it to your system.

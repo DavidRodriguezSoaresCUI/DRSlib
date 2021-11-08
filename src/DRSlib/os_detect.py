@@ -11,10 +11,6 @@ be written.
 I am not the original author of this class. It was downloaded from:
 https://github.com/scivision/pybashutils/blob/master/pybashutils/os_detect.py
 
-API:
-    - Os
-
-See elements' docstrings for further explanations.
 '''
 
 from platform import system, uname

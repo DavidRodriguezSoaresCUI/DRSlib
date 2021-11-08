@@ -6,11 +6,6 @@ CLI text-based spinning animation
 =================================
 
 An exceedingly simplistic progress animation library.
-
-API:
-    - MySpinner
-
-See elements' docstrings for further explanations.
 '''
 
 import itertools
@@ -22,10 +17,11 @@ class MySpinner:
     ''' My simple spinner, one-function, easy to use and supports text
     on the left of the spinning wheel !
     
-    Usage example:
-    >>> spinner = MySpinner()
-    >>> nb_items = len(items_to_process)
-    >>> for idx, item in enumerate(items_to_process):
+    Usage example::
+
+        spinner = MySpinner()
+        nb_items = len(items_to_process)
+        for idx, item in enumerate(items_to_process):
             if idx%10==0:
                 spinner.animation( text=f"Progress: {100*idx/nb_items:.1f}%" ) 
             process_item( item )

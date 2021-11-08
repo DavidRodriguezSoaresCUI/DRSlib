@@ -7,21 +7,17 @@ FileSystemDataBase
 
 A collection of tools for having a cached representation of
 a file system.
-
-API:
-    - FSindex
-    - CachedFS
-    - 
-    - 
-
-See elements' docstrings for further explanations.
 '''
 
 from pathlib import Path
 import re
 import json
-from typing import Callable, Union, List, Dict
+from typing import Callable, Union, List, Dict, Iterable
+import logging
 from .decorators import timer
+from .path_tools import ensure_dir_exists, make_FS_safe, folder_get_file_count
+from .utils import pickle_this, unpickle_this
+log = logging.getLogger( __file__ )
 
 
 def FSindex( root: Path, condition: Callable = lambda x: True ) -> Dict[str,dict]:
@@ -179,3 +175,151 @@ class CachedFS:
         backup = json.loads( backup_file.read_text( encoding='utf8' ) )
         return CachedFS( root=root, backup_fs=backup )
     
+
+def get_snapshot_file( snapshot_folder: Path, snapshot_filename: str ) -> Path:
+    ''' Returns a snapshot file path, given snapshot folder path and a filename 
+    (which passes through a sanitization process).
+    '''
+    
+    ensure_dir_exists( snapshot_folder )
+    return snapshot_folder / make_FS_safe( snapshot_filename + '.snapshot' )
+
+
+def get_folder_snapshot_h( _root: Path, extentions: Iterable[str], snapshot_folder: Path, recursive: bool = True, simplified: bool = False, rec: bool = False ) -> dict:
+    ''' Recursive helper function to `get_folder_snapshot`.
+    For more information see its docstring.
+    '''
+
+    # '*.txt' -> 'txt' extension conversion
+    extentions = [ e.replace('*.','.') for e in extentions ]
+
+    # Check for cached results
+    cache_file_name = str(_root) + ('.S' if simplified else '.C')
+    cache_file = get_snapshot_file( snapshot_folder, cache_file_name )
+    try:
+        res = unpickle_this( cache_file )
+    except Exception:
+        res = None
+    if res:
+        if simplified:
+            log.info( "get_folder_snapshot: loaded from cache" )
+            return res
+        # Check for discrepancy in file number, as indicator something changed and snapshot should be rebuilt
+        nbfiles1, nbfiles2 = res['__nbfiles__'], folder_get_file_count( _root )
+        if nbfiles1==nbfiles2:
+            log.info( "get_folder_snapshot: loaded from cache" )
+            return res
+        log.debug("get_folder_snapshot: number of files changes (%s != %s) -> updating snapshot", nbfiles1, nbfiles2)
+
+    # Build from scratch
+    log.info("get_folder_snapshot: from '%s' ..", _root)
+    content = dict()
+
+    if simplified: # "simplified" version
+        for item in _root.iterdir():
+            if item.is_file():
+                (name, ext) = (item.stem, item.suffix)
+                if ext not in extentions:
+                    continue
+                content[name] = item.resolve()
+            elif item.is_dir():
+                if not recursive:
+                    continue
+                content_rec = get_folder_snapshot_h( item, extentions, snapshot_folder, recursive, simplified, rec=True )
+                content.update( content_rec )
+            else:
+                raise ValueError("get_folder_snapshot::Not file or folder : {}".format(item))
+                
+    else: # "complex" version
+        file_count = 0
+        for item in _root.iterdir():
+            if item.is_file():
+                (name, ext) = (item.stem, item.suffix)
+                if ext not in extentions:
+                    continue
+                content[name] = item.resolve()
+                file_count += 1
+            elif item.is_dir():
+                if not recursive:
+                    continue
+                content_rec = get_folder_snapshot_h( item, extentions, snapshot_folder, recursive, simplified, rec=True )
+                content[item.name] = content_rec
+                file_count += content_rec['__nbfiles__']
+            else:
+                raise ValueError("get_folder_snapshot::Not file or folder : {}".format(item))
+
+        # Add file count
+        content['__nbfiles__'] = file_count
+        log.debug("get_folder_snapshot: from '%s' : found %s files !", _root, file_count)
+
+    # Caching for later use
+    if not (simplified and rec):
+        pickle_this( content, cache_file )
+
+    return content
+
+
+def get_folder_snapshot( _root: Path, extentions: Iterable[str], snapshot_folder: Path, recursive: bool = True, simplified: bool = False ) -> dict:
+    ''' Recursively builds a dictionnary representation of a directory tree. Only listed file extensions are considered.
+
+    `extensions` : iterable of ``'*.ext'`` or ``'.ext'``
+
+    Rules ("complex") :
+     - The returned dictionnary has one entry : 'root'
+     - An entry E can have one of three values according to  :
+       > E is a directory : its value is a dictionnary with name of contained items as keys
+       > E is a file : its value is its path (string format)
+     - Each directory has one special entry '__nbfiles__', the recursive file count
+
+    ex : let the following tree::
+
+        <root>
+            --A
+                --T
+                    -->file8.png
+                -->file7.txt
+                -->file4.jpg
+            --C
+                -->file5.git
+            --G
+            -->file3.log
+
+    will have representation ::
+
+        {
+            '<root>': {
+                'A': {
+                    'T': {
+                        'file8': '<root>/A/T/file8.png',
+                        '__nbfiles__': 1
+                    },
+                    'file7': '<root>/A/file7.txt',
+                    'file4': '<root>/A/file4.jpg',
+                    '__nbfiles__': 3
+                },
+                'C': {
+                    'file5': '<root>/A/file5.git',
+                    '__nbfiles__': 1
+                },
+                'G': None,
+                'file3' : '<root>/file3.log',
+                '__nbfiles__': 5
+            }
+        }
+
+    Rules ("simplified"):
+     - Returns a dictionnary without nesting
+     - All entries are files (with matching extension) with format : <filename:str> : <absolute file path:Path>
+
+    Representation for previous tree::
+
+        {
+            'file3': '<root>/file3.log',
+            'file4': '<root>/A/file4.jpg',
+            'file5': '<root>/A/file5.git',
+            'file7': '<root>/A/file7.txt',
+            'file8': '<root>/A/T/file8.png'
+        }
+    '''
+    ensure_dir_exists( snapshot_folder )
+    return get_folder_snapshot_h( _root, extentions, snapshot_folder, recursive, simplified )
