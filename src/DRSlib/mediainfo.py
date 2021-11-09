@@ -330,7 +330,7 @@ class MediaInfo:
         return data
 
 
-    def get_datapoint( self, media_file: Path, datapoint: str ) -> dict:
+    def get_datapoint( self, media_file: Path, datapoint: str ) -> MEDIAINFO_POSSIBLE_RETURN_VALUES:
         ''' Gets one datapoint's value
         For multiple datapoints, use `MediaInfo.get_datapoints`
 
@@ -343,11 +343,7 @@ class MediaInfo:
 
         # `datapoint` may be a shorthand datapoint reference. ex : 'V_UniqueID' is shorthand for '--Inform=Video;%UniqueID%'
         dp = Datapoint.from_string( self.DATAPOINTS.get( datapoint, datapoint ) )
-        return {
-            dp.category : {
-                dp.parameter_shorthand[2:]: MediaInfo.__filter_data(self.__get_datapoint( _file, dp ))
-            }
-        }
+        return MediaInfo.__filter_data(self.__get_datapoint( _file, dp ))
 
 
     def get_datapoints( self, media_file: Path, datapoints: List[str], existing_stats=None ) -> Dict[str,MEDIAINFO_POSSIBLE_RETURN_VALUES]:

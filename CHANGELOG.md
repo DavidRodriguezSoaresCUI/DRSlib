@@ -20,6 +20,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `YoloAIO.py`: Reworked CLI UI to behave more intuitively.
 -->
 
+## [0.4.dev7] - 2021-11-09
+
+### Bugfix
+
+- `DRSlib.mediainfo.MediaInfo.get_datapoint`: return value should be a value
+
 ## [0.4.dev6] - 2021-11-09
 
 ### Bugfix
