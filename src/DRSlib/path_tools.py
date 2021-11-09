@@ -18,11 +18,13 @@ from os import popen
 import re
 import sys
 import win32api
+import logging
+
 from .os_detect import Os
 from .execute import execute
-import logging
-log = logging.getLogger( __file__ )
+from .utils import is_iterable
 
+log = logging.getLogger( __file__ )
 MAKE_FS_SAFE_PATTERN = re.compile( pattern=r'[\\/*?:"<>|]' )
 
 
@@ -42,16 +44,16 @@ class FileCollector:
         ''' Collect files matching given pattern(s) '''
         files = []
         
-        if isinstance( pattern, str ):
+        if isinstance( _pattern, str ):
             # 11/11/2020 BUGFIX : was collecting files in trash like a cyber racoon
             files = [
                 item.resolve() 
-                for item in self.root.glob( pattern )
+                for item in self.root.glob( _pattern )
                 if item.is_file() and (not '$RECYCLE.BIN' in item.parts)
             ]
 
-            self.log.debug( "\t'%s': Found %s files in %s", pattern, len(files), self.root )
-        elif isinstance( pattern, Iterable ):
+            self.log.debug( "\t'%s': Found %s files in %s", _pattern, len(files), self.root )
+        elif is_iterable( pattern ):
             patterns = pattern
             assert 0 < len(patterns)
             for p in patterns:
@@ -72,17 +74,17 @@ def file_collector( root: Path, pattern: Union[str,Iterable[str]] = '**/*.*' ) -
     def collect( _pattern: str ) -> List[Path]:
         # 11/11/2020 BUGFIX : was collecting files in trash like a cyber racoon
         _files = [
-            item.resolve() 
-            for item in root.glob( pattern )
+            item
+            for item in root.glob( _pattern )
             if item.is_file() and (not '$RECYCLE.BIN' in item.parts)
         ]
-        log.debug( "\t'%s': Found %s files in %s", pattern, len(_files), root )
+        log.debug( "\t'%s': Found %s files in %s", _pattern, len(_files), root )
         return _files
 
     files = []
     if isinstance( pattern, str ):
         files = collect( pattern )
-    elif isinstance( pattern, Iterable ):
+    elif is_iterable( pattern ):
         patterns = pattern
         assert 0 < len(patterns)
         for p in patterns:

@@ -20,6 +20,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `YoloAIO.py`: Reworked CLI UI to behave more intuitively.
 -->
 
+## [0.4.dev5] - 2021-11-09
+
+### Bugfix
+
+- `DRSlib.path_tools.FileCollector.collect` and `DRSlib.path_tools.file_collector`: bugfix attempt
+
 ## [0.4.dev4] - 2021-11-09
 
 ### Mofified
