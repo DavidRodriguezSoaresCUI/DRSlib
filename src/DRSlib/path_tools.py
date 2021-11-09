@@ -44,15 +44,15 @@ class FileCollector:
         ''' Collect files matching given pattern(s) '''
         files = []
         
-        if isinstance( _pattern, str ):
+        if isinstance( pattern, str ):
             # 11/11/2020 BUGFIX : was collecting files in trash like a cyber racoon
             files = [
                 item.resolve() 
-                for item in self.root.glob( _pattern )
+                for item in self.root.glob( pattern )
                 if item.is_file() and (not '$RECYCLE.BIN' in item.parts)
             ]
 
-            self.log.debug( "\t'%s': Found %s files in %s", _pattern, len(files), self.root )
+            self.log.debug( "\t'%s': Found %s files in %s", pattern, len(files), self.root )
         elif is_iterable( pattern ):
             patterns = pattern
             assert 0 < len(patterns)
@@ -271,7 +271,7 @@ def windows_list_logical_drives() -> List[Path]:
                         continue
 
             drives = list( 
-                filter_drives( win32api.GetLogicalDriveStrings().split('\x00') ) 
+                filter_drives( win32api.GetLogicalDriveStrings().split('\x00') )
             )
             return drives
         except ImportError as e:
