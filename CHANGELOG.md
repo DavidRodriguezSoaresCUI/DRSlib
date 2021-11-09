@@ -20,6 +20,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `YoloAIO.py`: Reworked CLI UI to behave more intuitively.
 -->
 
+## [0.4.dev4] - 2021-11-09
+
+### Mofified
+
+- `requirements`: fixed version `pywin32=300` because version 302 had issues.
+
+### Bugfix
+
+- `DRSlib.cli_ui.user_input`: bugfix attempt
+
+## [0.4.dev3] - 2021-11-09
+
+### Added
+
+- `requirements`: Added forgotten pywin32 requirement
+
+### Mofified
+
+- `DRSlib.cli_ui.user_input`: groundwork for more debugging, plus smart prompt reformat
+
 ## [0.4.dev2] - 2021-11-09
 
 ### Added

@@ -14,9 +14,11 @@ from typing import Iterable, Union, Any, Callable, Dict, Optional
 from pathlib import Path
 import sys
 import os
+
 from .banner import one_line_banner
 from .os_detect import Os
 from .path_tools import folder_get_subdirs, windows_list_logical_drives, make_FS_safe
+from .debug import debug_var
 
 KBI_msg = "A KEYBOARDINTERRUPT WAS RAISED. THE PROGRAM WILL EXIT NOW."
 
@@ -93,10 +95,16 @@ def user_input( prompt: str, accepted: Union[Iterable[Union[str,int]],Callable],
     an accepted value is entered or a KeyboardInterrupt is raised.
     Note: this is only designed to retrieve values of the following types: str, int, float
     '''
+    
+    # Smart prompt reformat
     if default is not None:
         prompt += f"[default:{default}] "
+    if prompt[-1] == ':':
+        prompt += ' '
+    elif prompt[-2:]!=': ':
+        prompt += ': '
 
-    acceptable_UI = lambda ui: (callable(accepted) and accepted(ui)) or (ui in accepted)
+    acceptable_UI = lambda ui: accepted(ui) if callable(accepted) else (ui in accepted)
         
     while True:
         # main loop: ask user until an acceptable input is received, or a KeyboradInterrupt ends the program
@@ -111,6 +119,9 @@ def user_input( prompt: str, accepted: Union[Iterable[Union[str,int]],Callable],
         for variation in variations:
             try:
                 __user_input = eval( variation )
+                debug_var(_user_input)
+                debug_var(variation)
+                debug_var(__user_input)
                 if acceptable_UI( __user_input ):
                     return __user_input
             except Exception as e:
