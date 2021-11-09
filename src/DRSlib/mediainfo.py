@@ -148,9 +148,11 @@ class MediaInfo:
     # collection of shorthand and their MediaInfo-understandable CLI argument counterpart
     # Naming convention : '<category_name_initial>_<parameter_name>'
     DATAPOINTS = {
-        'V_StreamSize' :'--Inform=Video;%StreamSize%',
-        'V_FrameCount' :'--Inform=Video;%FrameCount%',
-        'V_UniqueID'   :'--Inform=Video;%UniqueID%',
+        'V_StreamSize' : '--Inform=Video;%StreamSize%',
+        'V_FrameCount' : '--Inform=Video;%FrameCount%',
+        'V_UniqueID'   : '--Inform=Video;%UniqueID%',
+        'V_Duration'   : '--Inform=Video;%Duration%',
+        'V_FrameRate'  : '--Inform=Video;%FrameRate%'
     }
 
     UNIT_FACTOR = {
@@ -308,7 +310,6 @@ class MediaInfo:
                     res[_category][_datapoint] = self.__try_casting_numbers(
                         regex_res[1]
                     )
-
 
         return res
 

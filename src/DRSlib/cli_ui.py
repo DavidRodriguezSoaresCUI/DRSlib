@@ -111,17 +111,17 @@ def user_input( prompt: str, accepted: Union[Iterable[Union[str,int]],Callable],
         for variation in variations:
             try:
                 __user_input = eval( variation )
-                if _user_input( __user_input ):
+                if acceptable_UI( __user_input ):
                     return __user_input
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Ignored exception {e}")
         
         # case: user input is not accepted AND there is a default
         if default is not None:
             return default
         
         # case: user input is not accepted AND there is no default => notify user, ask again
-        print(f"Input {_user_input} is not a valid input. %s", f"Please choose one of : {accepted}" if not callable(accepted) else "" )
+        print("Input '%s' is not a valid input. %s", _user_input, (f"Please choose one of : {accepted}" if not callable(accepted) else "") )
 
 
 def choose_from_list( choices: list, default: int ) -> Any:
@@ -176,6 +176,7 @@ def select_action( choices: Dict[str,Callable], no_banner: bool = False, default
     # Return or execute corresponding callable
     if execute:
         choices[_user_input]['action']()
+        return None
     else:
         return choices[_user_input]['action']
 

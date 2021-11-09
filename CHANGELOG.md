@@ -20,6 +20,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `YoloAIO.py`: Reworked CLI UI to behave more intuitively.
 -->
 
+## [0.4.dev2] - 2021-11-09
+
+### Added
+
+- `DRSlib.mediainfo.MediaInfo.DATAPOINTS`: Added datapoint shorthands
+
+### Mofified
+
+- `DRSlib.cli_ui.user_input`: error/exception messages
+
+### Bugfix
+
+- `DRSlib.cli_ui.user_input`
+
 ## [0.4.dev1] - 2021-11-09
 
 ### Added
