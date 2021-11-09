@@ -83,6 +83,35 @@ def decorator_with_arguments( expected_argument: Any ) -> Callable:
     return actual_decorator
 
 
+########### progress tracking ###########
+
+def call_progress( message: str ) -> Callable:
+    ''' Prints progress of a callable to stdout
+    '''
+
+    def actual_decorator( user_function: Callable ) -> Callable:
+
+        # maybe do something here
+
+        @functools.wraps( user_function )
+        def wrapper( *args, **kwargs ) -> Any:
+            nonlocal user_function, message
+            
+            print("-"*40)
+            print( message + ' ..' )
+            res = user_function( *args, **kwargs )
+            print( message + ' OK!' )
+            print("-"*40)
+
+            return res
+
+        return wrapper
+
+    assert isinstance( message, str ), "message must be a string"
+
+    return actual_decorator
+
+
 ########### timing ###########
 
 def timer( user_function: Callable ) -> Callable:

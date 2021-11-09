@@ -4,13 +4,6 @@ Debugging utils
 ===============
 
 Deubgging is made easier with these convenience functions.
-
-API:
-    - func_attribute_printout
-    - debug_var
-    - call_progress
-
-See elements' docstrings for further explanations.
 '''
 
 from typing import Callable, Any, Union
