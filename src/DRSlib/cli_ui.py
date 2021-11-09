@@ -18,7 +18,6 @@ import os
 from .banner import one_line_banner
 from .os_detect import Os
 from .path_tools import folder_get_subdirs, windows_list_logical_drives, make_FS_safe
-from .debug import debug_var
 
 KBI_msg = "A KEYBOARDINTERRUPT WAS RAISED. THE PROGRAM WILL EXIT NOW."
 
@@ -119,9 +118,6 @@ def user_input( prompt: str, accepted: Union[Iterable[Union[str,int]],Callable],
         for variation in variations:
             try:
                 __user_input = eval( variation )
-                debug_var(_user_input)
-                debug_var(variation)
-                debug_var(__user_input)
                 if acceptable_UI( __user_input ):
                     return __user_input
             except Exception as e:

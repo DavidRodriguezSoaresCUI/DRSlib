@@ -4,27 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-<!-- example
-## [1.1.1] - 2021-06-26
-
-### Modified
-
-- `YoloAIO.vpy`: Rework of step 1 for readability and bugfix (see below); Thinner white padding for text box; Added coordinates to simplify maintaining code that crops stuff. Default 'step' is now 1 (duh).
-
-- `YoloAIO.py`: Added to double quote normalization.
-
-### Bugfix
-
-- `YoloAIO.vpy`: In step 1, text box had incorrect vertical position. Also, solved some "Error: __ must be MOD2" issues and an AssertionError in step 3 when looking for 1 Color only.
-
-- `YoloAIO.py`: Reworked CLI UI to behave more intuitively.
--->
-
 ## [0.4.dev8] - 2021-11-09
 
 ### Added
 
 - `DRSlib.utils.LOG_FORMAT`: Format for loggers
+
+### Modified
+
+- `DRSlib.cli_ui.user_input`: Removed debugging code
 
 ## [0.4.dev7] - 2021-11-09
 
