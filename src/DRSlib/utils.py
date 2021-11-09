@@ -14,6 +14,8 @@ import collections
 import logging
 log = logging.getLogger( __file__ )
 
+LOG_FORMAT = "[%(levelname)s:%(name)s] %(message)s"
+
 def pickle_this( data: Any, save_file: Path ) -> None:
     ''' Stores `data` to a file
     '''
