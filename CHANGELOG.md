@@ -71,7 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `requirements`: Added forgotten pywin32 requirement
 
-### Mofified
+### Modified
 
 - `DRSlib.cli_ui.user_input`: groundwork for more debugging, plus smart prompt reformat
 
@@ -81,7 +81,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - `DRSlib.mediainfo.MediaInfo.DATAPOINTS`: Added datapoint shorthands
 
-### Mofified
+### Modified
 
 - `DRSlib.cli_ui.user_input`: error/exception messages
 

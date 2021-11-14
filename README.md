@@ -35,3 +35,7 @@ documentation from source:
 
 - On `Windows`: Run `sphinx-full-rebuild.bat` from directory `docs`
 - On `Linux`: If your shell is bash compatible, run `sphinx-full-rebuild.sh` from directory `docs`. If not, you should be capable of adapting it to your system.
+
+*Building documentation* requires installing packages ``sphinx`` and ``furo`` you can install in one of these ways:
+- ``pip install -r requirements-documentation.txt``
+- ``pip install sphinx furo``
