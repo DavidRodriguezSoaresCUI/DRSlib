@@ -1,2 +1,0 @@
-# DRSlib requirements
-send2trash

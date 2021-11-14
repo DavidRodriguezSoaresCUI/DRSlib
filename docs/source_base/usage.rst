@@ -28,13 +28,10 @@ but function ``DRSlib.path_tools.windows_list_logical_drives`` has an
     
     $ pip install pywin32
 
-and there is a required (``send2trash``) you can install in one of these ways:
+Note: there is a required package (``send2trash``) that should have been installed 
+with ``DRSlib``. If not :
 
-- .. code-block:: console
-    
-    $ pip install -r requirements.txt
-
-- .. code-block:: console
+.. code-block:: console
     
     $ pip install send2trash
 

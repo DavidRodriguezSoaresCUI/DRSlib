@@ -12,6 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from pathlib import Path
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../src/'))
@@ -24,7 +25,9 @@ copyright = '2021, DavidRodriguezSoaresCUI'
 author = 'DavidRodriguezSoaresCUI'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.5.dev3'
+# file 'setup.cfg' at root has line 3 (example):
+# version = 0.5.dev4
+release = Path('../../setup.cfg').read_text().splitlines()[2].replace('version = ','v')
 
 
 # -- General configuration ---------------------------------------------------
