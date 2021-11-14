@@ -1,0 +1,2 @@
+# DRSlib requirement for windows
+pywin32>=302

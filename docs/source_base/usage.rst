@@ -13,6 +13,33 @@ To use DRSlib, first install/update it using pip:
 The ``--pre`` switch may not be needed when stable releases **DRSlib** are made available.
 
 
+Dependencies
+------------
+
+**DRSlib** was built to have no dependency outside of standard library, 
+but function ``DRSlib.path_tools.windows_list_logical_drives`` has an 
+*optional* dependency (``win32api``) you can install in one of these ways:
+
+- .. code-block:: console
+    
+    $ pip install -r requirements-windows.txt
+
+- .. code-block:: console
+    
+    $ pip install pywin32
+
+**Building documentation** requires installing packages ``sphinx`` and ``furo`` you can install in one of these ways:
+
+- .. code-block:: console
+    
+    $ pip install -r requirements-documentation.txt
+
+- .. code-block:: console
+    
+    $ pip install sphinx furo
+
+
+
 Usage in your Python scripts
 ----------------------------
 
@@ -66,3 +93,11 @@ read them from this automatically generated documentation, the source code or th
     # Displays DRSlib.cli_ui's docstring, and docstring (plus some extras) for each element in it
     help(DRSlib.cli_ui.pause)
     # Displays DRSlib.cli_ui.pause's docstring
+
+
+Building documentation
+----------------------
+
+Should be as simple as going to directory ``docs`` and running the ``sphinx-full-rebuild``
+that correspond to your OS (if you are on Windows/Linux). Note: see **Dependencies** for 
+how to install required modules to build documentation.

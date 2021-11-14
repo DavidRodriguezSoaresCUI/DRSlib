@@ -120,8 +120,8 @@ def user_input( prompt: str, accepted: Union[Iterable[Union[str,int]],Callable],
                 __user_input = eval( variation )
                 if acceptable_UI( __user_input ):
                     return __user_input
-            except Exception as e:
-                print(f"Ignored exception {e}")
+            except (ValueError, AttributeError):
+                pass
         
         # case: user input is not accepted AND there is a default
         if default is not None:
@@ -184,8 +184,8 @@ def select_action( choices: Dict[str,Callable], no_banner: bool = False, default
     if execute:
         choices[_user_input]['action']()
         return None
-    else:
-        return choices[_user_input]['action']
+    
+    return choices[_user_input]['action']
 
 
 def cli_explorer( root_dir: Path = None, allow_mkdir: bool = True ) -> Path:

@@ -1,0 +1,3 @@
+# DRSlib requirement to produce sphinx documentation
+sphinx>=4.2.0
+furo

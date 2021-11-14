@@ -23,11 +23,15 @@ class Datapoint:
     ''' In this context, a Datapoint represents a multimedia parameter
     in a format compatible with MediaInfo's cli interface.
     
-    Advanctages:
-     - systematic solution
-     - integrates cli<->shorthand format conversion
-     - ability to combine commands
-     - shifts complexity from MediaInfo's class
+    Advantages:
+
+    - systematic solution
+    
+    - integrates cli<->shorthand format conversion
+    
+    - ability to combine commands
+    
+    - shifts complexity from MediaInfo's class
     '''
 
     SEPARATOR = '\\n'
@@ -158,6 +162,7 @@ class MediaInfo:
     UNIT_FACTOR = {
         'Mb/s'    : 1_000_000,
         'kb/s'    : 1000,
+        'b/s'     : 1,
         'bits'    : 1,
         'GiB'     : 1_000_000_000,
         'MiB'     : 1_000_000,

@@ -12,26 +12,34 @@ just in case. Class may be usefull for repeated calls to `collect` method.
 
 '''
 
-from typing import Union, Iterable, List
-from pathlib import Path
 from os import popen
+from pathlib import Path
+from shutil import copy2
+from typing import Union, Iterable, List, Optional, Tuple
+import logging
 import re
 import sys
-import win32api
-import logging
 
-from .os_detect import Os
 from .execute import execute
+from .os_detect import Os
 from .utils import is_iterable
 
 log = logging.getLogger( __file__ )
 MAKE_FS_SAFE_PATTERN = re.compile( pattern=r'[\\/*?:"<>|]' )
 
+try:
+    import win32api
+except ImportError:
+    from DRSlib.os_detect import Os 
+    current_os = Os()
+    if current_os.windows:
+        log.error("Could not load win32api !")
 
 class FileCollector:
     ''' Easy to use tool to collect files matching a pattern (recursive or not), using pathlib.glob. 
     Reasoning for making it a class: Making cohexist an initial check/processing on root with a recursive
-    main function was not straightforward. I did it anyway, so feel free to use the function alternative. '''
+    main function was not straightforward. I did it anyway, so feel free to use the function alternative.
+    '''
 
     def __init__( self, root: Path ) -> None:
         assert root.is_dir()
@@ -108,12 +116,14 @@ def make_FS_safe( s: str ) -> str:
         string=s
     )
 
-def find_available_path( root: Path, base_name, file: bool ) -> Path:
+def find_available_path( root: Path, base_name: str, file: bool = True ) -> Path:
     ''' Returns a path to a file/directory that DOESN'T already exist.
     The file/dir the user wishes to make a path for is referred as X.
 
     `root`: where X must be created. Can be a list of path parts
+
     `base_name`: the base name for X. May be completed with '(index)' if name already exists.
+    
     `file`: True if X is a file, False if it is a directory
     '''
     # Helper function: makes suffixes for already existing files/directories
@@ -156,9 +166,13 @@ def make_valid_path(
     `create`: True instantiates X (empty file or dir), False doesn't
 
     Build upon `find_available_path`, adding:
-    - root path construction
+
+    - root path construction (List->Path)
+    
     - root mkdir
+    
     - ability to initialize returned file/dir
+
     '''
 
     # make root path
@@ -223,18 +237,18 @@ def folder_get_file_count( _root: Path, use_fallback: bool = False ) -> int:
     if use_fallback:
         return fallback()
 
-    current_os = Os()
+    _current_os = Os()
     command = None
-    if current_os.windows:
+    if _current_os.windows:
         # Windows CMD
         log.debug("Crawler from '%s'", _root)
         command = f"dir \"{_root}\" /A:-D /B /S | find \".\" /C"
-    elif current_os.wsl or current_os.linux:
+    elif _current_os.wsl or _current_os.linux:
         # Linux
         log.debug("Crawler from '%s'", _root)
         command = f"find \"{_root}\" -type f|wc -l"
     else:
-        log.warning( "OS not recognised or has no specific command set (%s); fallback method used.", current_os )
+        log.warning( "OS not recognised or has no specific command set (%s); fallback method used.", _current_os )
         return fallback()
 
     
@@ -255,28 +269,26 @@ def windows_list_logical_drives() -> List[Path]:
     ''' Uses windows-specific methods to retrieve a list of logical drives.
 
     Both methods have been developped and tested to give equivalent output and be interchangeable
+    
+    Warning: Only works on Windows !
     '''
     
     def method1():
         ''' uses a windows shell command to list drives '''
-        try:
 
-            def filter_drives( l ):
-                for item in l:
-                    if not item:
-                        continue
-                    try:
-                        yield Path(item).resolve()
-                    except Exception:
-                        continue
+        def filter_drives( l ):
+            for item in l:
+                if not item:
+                    continue
+                try:
+                    yield Path(item).resolve()
+                except Exception:
+                    continue
 
-            drives = list( 
-                filter_drives( win32api.GetLogicalDriveStrings().split('\x00') )
-            )
-            return drives
-        except ImportError as e:
-            print(f"windows_list_logical_drives: ImportError raised, so you may have tried using this function on a non-windows system, or the `pypiwin32` package is missing : {e}")
-            exit(1)
+        drives = list( 
+            filter_drives( win32api.GetLogicalDriveStrings().split('\x00') )
+        )        
+        return drives
     
     def method2():
         ''' uses a windows shell command to list drives '''
@@ -309,3 +321,45 @@ def windows_list_logical_drives() -> List[Path]:
         except Exception as e:
             print(f"windows_list_logical_drives: something went wrong : {e}")
             sys.exit(1)
+
+
+def safe_file_copy( file: Path, destination_dir: Path, file_size: Optional[int] = None, rename_if_destination_exists: bool = False ) -> Tuple[Path,int]:
+    ''' Copies file to some directory, and returns the destination file path and the amount of bytes copied.
+    If target file already exists, nothing is copied (content is not verified for a match).
+
+    Note: Can fail if:
+
+    * source file doesn't exist
+
+    * target file exists and ``rename_if_destination_exists=False``
+
+    * shutils.copy2 fails (out of space error or other).
+
+    `file_size`: File size in bytes. If provided, avoids a call to check the actual file size.
+
+    `rename_if_destination_exists`: Instead of failing if a file with same name already exist in destination
+    directory, choose an alternative name instead ( add ' (1)' or similar at the end of the name )
+
+    Returns: Tuple ( <target_file_path:Path|None>, <copied_bytes:int> )
+    '''
+    assert file and file.is_file()
+
+    # Making target path
+    target = destination_dir / file.name
+    if target.exists():
+        if rename_if_destination_exists:
+            target = find_available_path(
+                root=destination_dir,
+                base_name=file.name,
+                file=True
+            )
+        else:
+            log.warning( 'Cannot move %s because target already exist : %s', file, target )
+            return ( None, 0 )
+
+    # Copy
+    log.info('Copying %s -> %s', file, target)    
+    copy2( file, target )
+    log.info('Copying done !')
+    
+    return ( target, file_size if file_size else file.stat().st_size )

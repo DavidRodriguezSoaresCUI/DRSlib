@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.4] - 2021-11-14
+
+### Added
+
+- `DRSlib.path_tools`: Added `safe_file_copy` function.
+
+### Bugfix
+
+- `DRSlib.mediainfo.MediaInfo.UNIT_FACTOR`: Added 'b/s' entry
+- `DRSlib.path_tools`: try-except block for `win32api` module import; It was causing issues on non-windows installs.
+
+### Documentation
+
+- Refinements/bugfixes to scripts
+- Added sections in `usage.rst` about requirements and building documentation.
+
+## [0.4.dev9] - 2021-11-09
+
+### Modified
+
+- `DRSlib.cli_ui.user_input`: Removed debugging code
+
 ## [0.4.dev8] - 2021-11-09
 
 ### Added
