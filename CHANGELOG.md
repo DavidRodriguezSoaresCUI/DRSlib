@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.dev5] - 2021-11-14
+
+### Modified
+
+- `DRSlib.utils.LOG_FORMAT`: replaced `name` by `funcName` to reduce log message length
+- `README`: New section "Warning to users", plus rearranging sections and correcting semantic
+
 ## [0.5.dev4] - 2021-11-14
 
 ### Modified
