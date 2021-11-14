@@ -16,7 +16,7 @@ The ``--pre`` switch may not be needed when stable releases **DRSlib** are made 
 Dependencies
 ------------
 
-**DRSlib** was built to have no dependency outside of standard library, 
+**DRSlib** was built to not have many dependency outside of standard library, 
 but function ``DRSlib.path_tools.windows_list_logical_drives`` has an 
 *optional* dependency (``win32api``) you can install in one of these ways:
 
@@ -27,6 +27,16 @@ but function ``DRSlib.path_tools.windows_list_logical_drives`` has an
 - .. code-block:: console
     
     $ pip install pywin32
+
+and there is a required (``send2trash``) you can install in one of these ways:
+
+- .. code-block:: console
+    
+    $ pip install -r requirements.txt
+
+- .. code-block:: console
+    
+    $ pip install send2trash
 
 **Building documentation** requires installing packages ``sphinx`` and ``furo`` you can install in one of these ways:
 

@@ -24,7 +24,7 @@ copyright = '2021, DavidRodriguezSoaresCUI'
 author = 'DavidRodriguezSoaresCUI'
 
 # The full version, including alpha/beta/rc tags
-release = 'v0.5.dev1'
+release = 'v0.5.dev2'
 
 
 # -- General configuration ---------------------------------------------------
