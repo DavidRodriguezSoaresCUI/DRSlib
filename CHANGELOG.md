@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.dev8] - 2021-11-14
+
+### Modified
+
+- `DRSlib.fsdb.get_snapshot_file`: tentative bugfix; truncating snapshot filename to 240 characters to avoid `OSError` on path use.
+
 ## [0.5.dev7] - 2021-11-14
 
 ### License

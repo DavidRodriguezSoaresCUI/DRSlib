@@ -16,6 +16,7 @@ from typing import Callable, Union, List, Dict, Iterable
 import logging
 from .decorators import timer
 from .path_tools import ensure_dir_exists, make_FS_safe, folder_get_file_count
+from .str_utils import truncate_str
 from .utils import pickle_this, unpickle_this
 log = logging.getLogger( __file__ )
 
@@ -182,7 +183,22 @@ def get_snapshot_file( snapshot_folder: Path, snapshot_filename: str ) -> Path:
     '''
     
     ensure_dir_exists( snapshot_folder )
-    return snapshot_folder / make_FS_safe( snapshot_filename + '.snapshot' )
+    FS_safe_snapshot_filename = make_FS_safe( snapshot_filename + '.snapshot' )
+    snapshot_file = snapshot_folder / FS_safe_snapshot_filename
+
+    # Multiple reasons may lead to OSErrors for a given path
+    try:
+        snapshot_file.touch()
+    except OSError as e:
+        try: # Correction: trucnating file name to 240 characters
+            snapshot_file = snapshot_folder / truncate_str( 
+                FS_safe_snapshot_filename, 
+                output_length=240
+            )
+        except OSError:
+            raise OSError("get_snapshot_file: Snapshot file inaccessible for unforeseen reasons (FIXME!).") from e
+
+    return snapshot_file
 
 
 def get_folder_snapshot_h( _root: Path, extentions: Iterable[str], snapshot_folder: Path, recursive: bool = True, simplified: bool = False, rec: bool = False ) -> dict:
