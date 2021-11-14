@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.dev1] - 2021-11-14
+
+### Added
+
+- `DRSlib.path_tools`: Added `replace_file, open_folder_in_explorer` function.
+
 ## [0.4] - 2021-11-14
 
 ### Added

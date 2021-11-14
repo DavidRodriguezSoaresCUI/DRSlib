@@ -14,6 +14,7 @@ just in case. Class may be usefull for repeated calls to `collect` method.
 
 from os import popen
 from pathlib import Path
+from send2trash import send2trash
 from shutil import copy2
 from typing import Union, Iterable, List, Optional, Tuple
 import logging
@@ -363,3 +364,42 @@ def safe_file_copy( file: Path, destination_dir: Path, file_size: Optional[int] 
     log.info('Copying done !')
     
     return ( target, file_size if file_size else file.stat().st_size )
+
+    
+def replace_file( to_be_replaced: Path, replacing: Path ) -> None:
+    ''' Tries to replace a file by another. Sends both ``to_be_replaced`` file
+    and original ``replacing`` file to trash.
+    ''' 
+    assert to_be_replaced.is_file and replacing.is_file()
+    
+    log.info("Sending '%s' to trash", to_be_replaced)
+    send2trash(to_be_replaced)
+
+    log.info("Replacing file %s by file at %s", to_be_replaced, replacing)
+    target_file, bytes_copied = safe_file_copy(file=replacing, destination_dir=to_be_replaced.parent)
+    if not (target_file.samefile(to_be_replaced) and bytes_copied > 0):
+        log.warning("Something went wrong while copying.")
+        return 
+
+    log.info("Sending '%s' to trash", replacing)
+    send2trash(replacing)
+
+
+def open_folder_in_explorer( directory: Path ) -> None:
+    ''' Tries to open a file explorer window to given directory
+
+    Note: as of now, only the windows-specific part was tested,
+    not WSL or linux
+    '''
+    directory_s = str(directory.resolve())
+    _os = Os()
+    if _os.windows or _os.cygwin or _os.wsl:
+        command = [ 'explorer.exe', directory_s.replace('\\'*2,'\\') ]
+    elif _os.linux:
+        command = [ 'xdg-open', directory_s ]
+    else:
+        log.warning("Unsupported OS platform '%s' !", _os)
+        return
+        
+    log.debug("executing command: '%s'", command)
+    execute( command )
