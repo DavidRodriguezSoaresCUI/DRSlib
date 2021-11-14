@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.dev3] - 2021-11-14
+
+### BugFix
+
+- `DRSlib.path_tools.replace_file`: tentative bugfix
+
 ## [0.5.dev2] - 2021-11-14
 
 ### BugFix

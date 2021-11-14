@@ -376,9 +376,10 @@ def replace_file( to_be_replaced: Path, replacing: Path ) -> None:
     send2trash(to_be_replaced)
 
     log.info("Replacing file %s by file at %s", to_be_replaced, replacing)
-    target_file, bytes_copied = safe_file_copy(file=replacing, destination_dir=to_be_replaced.parent)
-    if not (target_file.samefile(to_be_replaced) and bytes_copied > 0):
-        log.warning("Something went wrong while copying.")
+    bytes_to_move = replacing.stat().st_size
+    _, bytes_copied = safe_file_copy(file=replacing, destination_dir=to_be_replaced.parent)
+    if bytes_copied != bytes_to_move:
+        log.warning("Something went wrong while copying: bytes_copied=%d != %d=bytes_to_move", bytes_copied, bytes_to_move)
         return 
 
     log.info("Sending '%s' to trash", replacing)
