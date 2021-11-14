@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.dev6] - 2021-11-14
+
+### License
+
+- Changed from `the Unlicense` to `CC0 1.0 Universal` after reading [this post](https://softwareengineering.stackexchange.com/a/147120)
+    * `LICENSE`: replaced contents with `CC0 1.0 Universal`
+- Bugfix: license was registered as `MIT` in `setup.cfg`
+
+### Modified
+
+ - `setup.cfg`: `classifiers` was entirely rewritten
+
 ## [0.5.dev5] - 2021-11-14
 
 ### Modified
