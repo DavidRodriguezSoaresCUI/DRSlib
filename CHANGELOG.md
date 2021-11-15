@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [0.5.dev8] - 2021-11-14
+## [0.5] - 2021-11-15
+
+### Modified
+
+- `DRSlib.mediainfo.MediaInfo`: added warnings when MediaInfo call returns no data.
+
+## [0.5.dev9] - 2021-11-14
 
 ### Modified
 

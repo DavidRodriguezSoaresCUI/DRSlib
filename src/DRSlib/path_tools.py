@@ -355,7 +355,7 @@ def safe_file_copy( file: Path, destination_dir: Path, file_size: Optional[int] 
                 file=True
             )
         else:
-            log.warning( 'Cannot move %s because target already exist : %s', file, target )
+            log.warning( 'Cannot copy %s because target already exist : %s', file.name, target )
             return ( None, 0 )
 
     # Copy

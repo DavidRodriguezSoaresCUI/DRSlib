@@ -262,6 +262,10 @@ class MediaInfo:
         _file = media_file.resolve()
         stdout = execute( [self.executable, str(_file)] )['stdout']
 
+        if stdout.strip()=='':
+            self.log.warning("Could not retrieve data from file %s. Name too long ?", media_file)
+            return {}
+
         # Preprocessing : decoding, splitting lines, regrouping datapoints
         category = 'Uncategorized'
         lines = { category : list() }
@@ -331,6 +335,10 @@ class MediaInfo:
                 str(media_file)
             ]
         )['stdout']
+
+        if data.strip()=='':
+            self.log.warning("Could not retrieve data from file %s. Name too long ?", media_file)
+            return None
         
         return data
 

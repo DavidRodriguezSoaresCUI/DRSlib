@@ -188,13 +188,14 @@ def get_snapshot_file( snapshot_folder: Path, snapshot_filename: str ) -> Path:
 
     # Multiple reasons may lead to OSErrors for a given path
     try:
-        snapshot_file.touch()
+        snapshot_file.is_file()
     except OSError as e:
         try: # Correction: trucnating file name to 240 characters
             snapshot_file = snapshot_folder / truncate_str( 
                 FS_safe_snapshot_filename, 
                 output_length=240
             )
+            snapshot_file.is_file()
         except OSError:
             raise OSError("get_snapshot_file: Snapshot file inaccessible for unforeseen reasons (FIXME!).") from e
 
