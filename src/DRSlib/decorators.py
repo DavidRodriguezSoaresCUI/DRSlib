@@ -11,7 +11,7 @@ Also, you can find :
 
 '''
 
-from typing import Any, Callable
+from typing import Any, Callable, Union
 import time
 import datetime
 import logging
@@ -164,6 +164,41 @@ def profile( user_function: Callable ) -> Callable:
     return wrapper
 
 
+def minimum_duration( min_duration_s: Union[float,int] ) -> Callable:
+    ''' Makes sure the callable's execution takes no less than
+    ``min_duration_s`` seconds to execute, using the ``time``
+    library's functions.
+
+    Usage example: Avoid getting banned for spamming requests::
+
+        ban_safe_urlopen = minimum_duration( min_duration_s=0.5 )( urllib.request.urlopen )
+        for url in URLs:
+            with ban_safe_urlopen(url) as f:
+                ...
+        
+    '''
+
+    def actual_decorator( user_function: Callable ) -> Callable:
+
+        @functools.wraps( user_function )
+        def wrapper( *args, **kwargs ) -> Any:
+            nonlocal user_function, min_duration_s
+            
+            start_time = time.time()
+            res = user_function( *args, **kwargs )
+            time_to_skip = min_duration_s - (time.time() - start_time)
+            if time_to_skip > 0:
+                time.sleep( time_to_skip )
+
+            return res
+
+        return wrapper
+
+    assert isinstance( min_duration_s, (float,int) ), "minimum_duration: Omitted parameter `min_duration_s`."
+
+    return actual_decorator
+
+
 ########### logging ###########
 
 
@@ -264,6 +299,9 @@ def cacheFS( cache_file: Path ) -> Callable:
     cached_data = load_cached_data( cache_file )
 
     return actual_decorator
+
+
+########### end of decorators ###########
 
 
 if __name__=="__main__":

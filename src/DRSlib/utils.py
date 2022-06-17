@@ -14,6 +14,7 @@ import collections
 import logging
 log = logging.getLogger( __file__ )
 
+# Used to be: "[%(levelname)s:%(filename)s:%(lineno)d] %(message)s"
 LOG_FORMAT = "[%(levelname)s:%(funcName)s] %(message)s"
 
 def pickle_this( data: Any, save_file: Path ) -> None:

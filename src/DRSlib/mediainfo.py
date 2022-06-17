@@ -232,7 +232,7 @@ class MediaInfo:
         Note that after the conversion the value is passed to `MediaInfo.__try_casting_numbers` 
         for basic int/float conversion.
         '''
-        if s in ['','\r\n','\n']:
+        if s in ['','\r\n','\n', None]:
             return None
             
         for unit,mult in cls.UNIT_FACTOR.items():

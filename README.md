@@ -46,7 +46,7 @@ I followed [this python.org tutorial](https://packaging.python.org/tutorials/pac
 ## Warning to users
 
 **DRSlib** is a quickly evolving package, and author doesn't take any responsibility to maintain it or to keep
-its API stable, but will make a good faith effor to do so. Also, some of its code writes to the disk, so its use 
+its API stable, but will make a good faith effort to do so. Also, some of its code writes to the disk, so its use 
 may lead to data loss.
 
 Use it at your own risk.

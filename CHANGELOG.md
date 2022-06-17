@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.6.dev1] - 2022-06-17
+
+### Added
+
+- `DRSlib.__init__.py`: Added `__all__` to try combatting failed imports.
+- `DRSlib.decorators`: Added `minimum_duration`
+
+### BugFix
+
+- `DRSlib.mediainfo.MediaInfo`: fixed not recognizing empty/error value
+
 ## [0.5] - 2021-11-15
 
 ### Modified

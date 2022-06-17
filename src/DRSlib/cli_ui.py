@@ -39,7 +39,7 @@ def pause() -> None:
     ''' Implements a 'pause' feature. Press ENTER to continue. If 'Ctrl+C' is pressed, 
     it exits the program '''
 
-    __input_KBI( "Press the <ENTER> key to continue..." )
+    __input_KBI( "Press the <ENTER> key to continue...", exit_on_KBI=False )
 
 
 def end_of_program( exit_code: int = 0, halt: bool = False ) -> None:
@@ -48,7 +48,6 @@ def end_of_program( exit_code: int = 0, halt: bool = False ) -> None:
     if halt:
         pause()
     sys.exit(exit_code)
-
 
 
 def yes_or_no( message: str, retry: bool = True, default: bool = None, exit_on_KBI: bool = True ) -> bool:
