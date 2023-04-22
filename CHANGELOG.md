@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.0] - 2023-04-22
+
+### Added
+
+- Augmented type hints
+- A few new methods, like `utils.assertTrue`
+- Using Mypy, Bandit, Pylint and Flake8 for static code analysis
+- Using Black formatter for consistent formatting
+
+### BugFix
+
+- Many fixes linked to usage of static code analysis
+
 ## [0.6.dev1] - 2022-06-17
 
 ### Added

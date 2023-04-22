@@ -1,5 +1,5 @@
 # package-level docstring
-__doc__ = '''
+"""
 DRSlib - a set of utilities by DavidRodriguezSoaresCUI
 ======================================================
 
@@ -14,5 +14,4 @@ License: see *LICENSE file*
 Author: **DavidRodriguezSoaresCUI**
 
 Check its `Github repository <https://github.com/DavidRodriguezSoaresCUI/DRSlib>`_ and its `Pypi project page <https://pypi.org/project/DRSlib-DavidRodriguezSoaresCUI/>`_ .
-'''
-__all__=['banner','cli_ui','debug','decorators','execute','fsdb','hash','interval','mediainfo','os_detect','path_tools','spinner','str_utils','utils']
+"""
