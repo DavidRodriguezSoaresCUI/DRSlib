@@ -9,6 +9,7 @@ import hashlib
 import logging
 from pathlib import Path
 from typing import Dict, Optional
+import zlib
 
 from .os_detect import Os
 from .path_tools import ensure_dir_exists, file_collector
@@ -140,3 +141,9 @@ def tree_hash(
             pattern=pattern,
             fastload=fastload,
         )
+
+
+def get_temporary_dir_name(file: Path) -> str:
+    """Returns predictable (approximately) unique 8-character (uppercase hexadecimal
+    alphanumeric) name, typically used for temporary directories"""
+    return hex(zlib.crc32(file.name.encode(encoding="utf8")))[2:].upper()

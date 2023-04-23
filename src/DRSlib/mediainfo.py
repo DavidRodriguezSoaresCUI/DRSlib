@@ -10,11 +10,11 @@ callable from a terminal.
 import logging
 import re
 from pathlib import Path
-from typing import List, Dict, Union, Iterable
+from typing import Dict, Iterable, List, Union
 
-from .utils import type_assert, flatten_list
 from .execute import execute
-
+from .list_utils import flatten_list
+from .utils import type_assert
 
 MEDIAINFO_POSSIBLE_RETURN_VALUES = Union[int, float, str, None]
 

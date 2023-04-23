@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.1] - 23.04.2023
+
+### Added
+
+- `dict_utils`: Collection of operations on `dict`
+- `list_utils`: Collection of operations on `list`; moved `flatten_list` from utils
+- `hash`: Added method `get_temporary_dir_name`
+
+### Modified
+
+- `utils.caller_info`: small fix for when `frame.code_context` is None
+
 ## [0.7.0] - 2023-04-22
 
 ### Added

@@ -136,3 +136,6 @@ docs/source/
 docs/build/
 docs/*.log
 docs/source_base/_build/
+
+# static code analysis scripts
+analyze_code.*

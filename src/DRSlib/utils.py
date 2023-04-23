@@ -34,7 +34,9 @@ def caller_info() -> dict:
         "file": Path(frame.filename),
         "name": frame.function,
         "line": frame.lineno,
-        "code": " ".join(frame.code_context).strip(),
+        "code": None
+        if frame.code_context is None
+        else " ".join(frame.code_context).strip(),
     }
 
 
@@ -100,20 +102,6 @@ def type_assert(
 
     # Default case : check type
     assertTrue(isinstance(v, expected_type), error_txt)
-
-
-def flatten_list(lst: list) -> list:
-    """Flatten nested list"""
-    if not any(isinstance(item, list) for item in lst):
-        return lst
-
-    res = []
-    for item in lst:
-        if isinstance(item, list):
-            res.extend(flatten_list(item))
-        else:
-            res.append(item)
-    return res
 
 
 def safe_re(
