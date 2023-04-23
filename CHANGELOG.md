@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.3] - 23.04.2023
+
+### Bugfix
+
+- Method `cli_ui.user_input`
+
 ## [0.7.2] - 23.04.2023
 
 ### Added

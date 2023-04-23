@@ -126,7 +126,7 @@ def user_input(
         variations = ["int(_user_input)", "float(_user_input)", "_user_input.lower()"]
         for variation in variations:
             try:
-                __user_input = ast.literal_eval(variation)
+                __user_input = eval(variation)
                 if acceptable_UI(__user_input):
                     return __user_input
             except (ValueError, AttributeError):
@@ -138,13 +138,12 @@ def user_input(
 
         # case: user input is not accepted AND there is no default => notify user, ask again
         print(
-            "Input '%s' is not a valid input. %s",
-            _user_input,
-            (f"Please choose one of : {accepted}" if not callable(accepted) else ""),
+            f"Input '{_user_input}' is not a valid input.",
+            (f" Please choose one of : {accepted}" if not callable(accepted) else ""),
         )
 
 
-def choose_from_list(choices: list, default: Optional[int]) -> Any:
+def choose_from_list(choices: list, default: Optional[int] = None) -> Any:
     """Prints then asks the user to choose an item from a list
     `default`
     """
