@@ -54,6 +54,38 @@ def dict_difference(dictA: dict, dictB: dict) -> dict:
     return diff
 
 
+def dict_intersection(dicts: List[dict]) -> dict:
+    """Given a list of dictionnaries, returns the common elements
+    determined by key
+    """
+    assertTrue(
+        len(dicts) > 1, "Expected at least 2 dictionnaries, found {}", len(dicts)
+    )
+    assertTrue(
+        all(d is not None and isinstance(d, dict) for d in dicts),
+        "Invalid argument: some items are Nore or not dicts!",
+    )
+
+    common = {}
+
+    for k, vref in dicts[0].items():
+        if not all(k in d for d in dicts[1:]):
+            # Some dicts don't have key `k`
+            continue
+        if isinstance(vref, dict):
+            common_v = dict_intersection([d[k] for d in dicts])
+            common[k] = common_v if common_v else "<varies>"
+            continue
+        value_set = set(d[k] for d in dicts)
+        if len(value_set) != 1:
+            # Divergent values for key `k`
+            common[k] = "<varies>"
+            continue
+        common[k] = vref
+
+    return common
+
+
 def dict_list_keys(d: dict) -> List[str]:
     """Searches (recursively) for all keys within dictionnary and returns them in an ordered list.
     Warns on duplicate."""
