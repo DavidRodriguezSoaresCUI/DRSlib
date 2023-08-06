@@ -12,6 +12,18 @@ Simple utils that accomplish one task well, specifically string operations.
 import re
 
 
+DOUBLE_QUOTE = '"'
+
+
+def ensure_quoted_on_space(s: str) -> str:
+    """Ensures a string containing spaces is fully enclosed
+    between double quotes
+    """
+    if " " not in s:
+        return s
+    return ensure_double_quotes(s)
+
+
 def ensure_double_quotes(s: str) -> str:
     """Ensures s is double quoted in a particular way :
      - returned string must begin and end with a double quote character `"`
@@ -102,33 +114,3 @@ def truncate_str(s: str, output_length: int, cut_location: str = "center") -> st
     raise ValueError(
         f"truncate_str: given parameter 'cut_location'={cut_location} is not in ['left','center','right'] !"
     )
-
-
-if __name__ == "__main__":
-    # ensure_double_quotes tests
-
-    # tests = [
-    #     '',
-    #     '.',
-    #     '"',
-    #     '"hello',
-    #     'hello"',
-    #     '"hello"',
-    #     '"he"llo"',
-    #     'he\\"llo'
-    # ]
-
-    # for test_s in tests:
-    #     res = ensure_double_quotes(test_s)
-    #     print(f"test_s={test_s}={list(test_s)} -> {list(res)} = {res}")
-
-    # truncate_str tests
-
-    tests = ["h" * 20, "h" * 21]
-    for new_len in [10, 15]:
-        for cut in ["left", "center", "right"]:
-            for test_s in tests:
-                res = truncate_str(test_s, new_len, cut)
-                print(
-                    f"new_len={new_len}, cut={cut} : test_s='{test_s}' (len={len(test_s)}) -> '{res}' (len={len(res)})"
-                )

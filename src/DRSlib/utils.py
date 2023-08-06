@@ -117,3 +117,14 @@ def safe_re(
         return res if mapping is None else mapping(res)
     except Exception:
         return None
+
+
+def cast_number(number: str) -> int | float | str:
+    """Attempts to cast number to int or float"""
+    try:
+        return int(number)
+    except ValueError:
+        try:
+            return float(number)
+        except ValueError:
+            return number

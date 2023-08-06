@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0] - 06.08.2023
+
+Bump in minor version justified by extensive changes
+
+### Added
+
+- `execute`: added `debug_execute` (adapted from https://github.com/manzik/cmdbench)
+- `interval`: added methods `contains`, `split`, `merge` and property `math_repr`
+- `str_utils`: added method `ensure_quoted_on_space`
+- `utils`: added method `cast_number`
+
+### Changed
+
+- DRSlib is now ``PEP-561`` compliant
+- Minimum runtime version is not Python `3.7`
+- `multiprocessing`: Added ability for nested multiprocessing (ex: A calls `SimpleMultiProcessing.bulk_processing` to B and B calls it to C)
+ > There are risks associated with nested multiprocessing, so use carefully !
+
+### Removed
+
+- A few ``if __name__ == "__main__"`` sections that used to be for testing
+
 ## [0.7.3] - 23.04.2023
 
 ### Bugfix

@@ -94,3 +94,32 @@ class Interval:
         elif end is not None:
             start = end - length
         return Interval(start, end)  # type: ignore[arg-type]
+
+    def contains(self, x: Numerical, strict: bool = False) -> bool:
+        """Returns True if x is in interval, False otherwise"""
+        if strict:
+            return self.left < x < self.right
+        return self.left <= x <= self.right
+
+    @property
+    def math_repr(self) -> str:
+        """Basic math representation: [<left>,<right>]"""
+        return f"[{self.left},{self.right}]"
+
+    def split(self, x: Numerical) -> Tuple["Interval"]:
+        """Split interval in two. If not possible, raise error"""
+        if not self.contains(x, strict=True):
+            raise InvalidInterval(
+                f"Can't split interval {self.math_repr} using point {x} not strictly in interval."
+            )
+        return (Interval(self.left, x), Interval(x, self.right))
+
+    def merge(self, other: "Interval") -> "Interval":
+        """Return merged interval"""
+        if self.right == other.left:
+            return Interval(self.left, other.right)
+        if self.left == other.right:
+            return Interval(other.left, self.right)
+        raise InvalidInterval(
+            f"Can't merge intervals {self.math_repr} and [{other.left},{other.right}]"
+        )

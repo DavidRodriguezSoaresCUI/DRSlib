@@ -10,7 +10,6 @@ Useful when you need to ask the user what to do, or select one
 of many options.
 """
 
-import ast
 import os
 import sys
 from pathlib import Path
