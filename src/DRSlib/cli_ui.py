@@ -1,6 +1,4 @@
 # pylint: disable=eval-used, broad-except
-
-
 """
 Command line user interface
 ===========================
@@ -18,7 +16,7 @@ from typing import Any, Callable, Dict, Iterable, Optional, Union
 from .banner import one_line_banner
 from .os_detect import Os
 from .path_tools import folder_get_subdirs, make_FS_safe, windows_list_logical_drives
-from .utils import assertTrue
+from .utils import assertTrue, cast_number
 
 KBI_msg = "A KEYBOARDINTERRUPT WAS RAISED. THE PROGRAM WILL EXIT NOW."
 
@@ -117,19 +115,20 @@ def user_input(
         # main loop: ask user until an acceptable input is received, or a KeyboradInterrupt ends the program
         _user_input = __input_KBI(prompt)
 
-        # case: raw user input is accepted
+        # case: raw or lowercase user input is accepted
         if acceptable_UI(_user_input):
             return _user_input
+        if acceptable_UI(_user_input.lower()):
+            return _user_input.lower()
 
         # case: processed user input is accepted
-        variations = ["int(_user_input)", "float(_user_input)", "_user_input.lower()"]
-        for variation in variations:
-            try:
-                __user_input = eval(variation)
-                if acceptable_UI(__user_input):
-                    return __user_input
-            except (ValueError, AttributeError):
-                pass
+        try:
+            # handle conversion to int or float
+            __user_input = cast_number(_user_input)
+            if isinstance(__user_input, (int, float)) and acceptable_UI(__user_input):
+                return __user_input
+        except ValueError:
+            pass
 
         # case: user input is not accepted AND there is a default
         if default is not None:

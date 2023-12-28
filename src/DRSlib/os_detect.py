@@ -1,7 +1,5 @@
 ﻿# pylint: disable=too-few-public-methods
-
-
-__doc__ = """
+"""
 OS detection module
 ===================
 

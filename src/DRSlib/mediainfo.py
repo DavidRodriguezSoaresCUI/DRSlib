@@ -7,14 +7,17 @@ An interface to software `MediaInfo <https://mediaarea.net/fr/MediaInfo>`_
 Note: For it to work, MediaInfo needs to be installed on the system AND be
 callable from a terminal.
 """
+import json
 import logging
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Union
 
 from .execute import execute
 from .list_utils import flatten_list
-from .utils import type_assert
+from .str_utils import human_parse_int
+from .utils import cast_number, dict_try_casting_values, type_assert
 
 MEDIAINFO_POSSIBLE_RETURN_VALUES = Union[int, float, str, None]
 
@@ -184,9 +187,7 @@ class MediaInfo:
     def get_MI_version(self) -> None:
         """Tries to obtain callable MediaInfo version"""
         try:
-            stdout = execute(command=[self.executable, "--Version"])["stdout"].replace(
-                "\n", ""
-            )
+            stdout = self.__execute(arguments=["--Version"]).replace("\n", "")
             version_match = re.search(r"(v[\.0-9]+)", stdout)
             if not version_match:
                 raise ValueError(f"version text doesnt match regex: '{stdout}'")
@@ -203,27 +204,10 @@ class MediaInfo:
         return str(self)
 
     @classmethod
-    def __try_casting_numbers(cls, s: str) -> MEDIAINFO_POSSIBLE_RETURN_VALUES:
-        """Simple helper function; tries to cast str -> int/float
-        returns argument when fails
-        """
-
-        try:
-            return int(s)
-        except ValueError:
-            try:
-                return float(s)
-            except ValueError:
-                return s
-
-    @classmethod
     def __filter_data(cls, s: str) -> MEDIAINFO_POSSIBLE_RETURN_VALUES:
         """MediaInfo typically returns a number. This function handles the conversion
         process in the case this number includes a unit and a "simple"/"raw" value is
         desired.
-
-        Note that after the conversion the value is passed to `MediaInfo.__try_casting_numbers`
-        for basic int/float conversion.
         """
         if s in ["", "\r\n", "\n", None]:
             return None
@@ -234,13 +218,35 @@ class MediaInfo:
                 s_ok = re.sub(
                     r"(\d) (\d)", r"\1\2", s[:pos]
                 )  # remove unit and spaces between numbers
-                val = MediaInfo.__try_casting_numbers(s_ok)
+                val = cast_number(s_ok)
 
                 if isinstance(val, (int, float)):
                     # successful cast
                     return val * mult
 
-        return MediaInfo.__try_casting_numbers(s)
+        return cast_number(s)
+
+    def __execute(
+        self,
+        media_file: Path | None = None,
+        arguments: list[str] | None = None,
+        output_format: str | None = "JSON",
+    ) -> str:
+        """Executes mediainfo on given file with given arguments"""
+        cmd = [self.executable]
+        if media_file is not None:
+            cmd.append(media_file)
+        if arguments:
+            cmd.extend(arguments)
+        if output_format:
+            cmd.append(f"--Output={output_format}")
+        stdX = execute(cmd)
+        stdout, stderr = stdX["stdout"], stdX["stderr"]
+        if stderr:
+            self.log.warning(
+                "MediaInfo call ended with errors: cmd=%s err=%s", cmd, stderr
+            )
+        return stdout
 
     def get_base_stats(
         self, media_file: Path
@@ -256,63 +262,25 @@ class MediaInfo:
         """
         type_assert(media_file, "media_file", Path, "MediaInfo::get_base_stats: ")
         _file = media_file.resolve()
-        stdout = execute([self.executable, str(_file)])["stdout"]
+        stdout = self.__execute(_file).strip()
 
-        if stdout.strip() == "":
+        if stdout == "":
             self.log.warning(
                 "Could not retrieve data from file %s. Name too long ?", media_file
             )
             return {}
 
-        # Preprocessing : decoding, splitting lines, regrouping datapoints
-        category = "Uncategorized"
-        lines: Dict[str, list] = {category: []}
-        for line in stdout.splitlines():
-            # Discard empty lines
-            if not line:
-                continue
+        # Reorganise data into list of tracks grouped by type
+        tracks: list[dict] = json.loads(stdout)["media"]["track"]
+        data = defaultdict(list)
+        for track in tracks:
+            _category = track["@type"]  # General, Video, Audio, Subtitle, etc
+            del track["@type"]
+            data[_category].append(track)
 
-            # Data lines have ':'
-            if ":" in line:
-                lines[category].append(line.split(":"))
-                continue
-
-            # Category line (?)
-            category = line
-            lines[category] = []
-
-        # Return actual data, nicely formatted
-        res = {
-            category: {
-                s_data[0].strip(): MediaInfo.__filter_data(s_data[1].strip())
-                for s_data in category_lines
-            }
-            for category, category_lines in lines.items()
-            if category_lines
-        }
-
-        # cleanup
-        cleanup = {"Video": {"Frame rate": r"([\.0-9]+) \([0-9/]+\) FPS"}}
-        for _category, _cat_rules in cleanup.items():
-            if _category not in res:
-                continue
-
-            for _datapoint, _datapoint_rule in _cat_rules.items():
-                if _datapoint not in res[_category]:
-                    continue
-                if not isinstance(res[_category][_datapoint], str):
-                    continue
-
-                # apply cleanup regex
-                regex_res = re.search(
-                    pattern=_datapoint_rule, string=str(res[_category][_datapoint])
-                )
-                if regex_res:
-                    res[_category][_datapoint] = self.__try_casting_numbers(
-                        regex_res[1]
-                    )
-
-        return res
+        return dict_try_casting_values(
+            data, cast_bool={"Yes": True, "No": False}, external_mapper=human_parse_int
+        )
 
     def __get_datapoint(
         self, media_file: Path, datapoint: Datapoint
@@ -321,7 +289,7 @@ class MediaInfo:
         `datapoint` must be in a form understandable by MediaInfo, like '--Inform=Video;%UniqueID%'
         """
 
-        data = execute([self.executable, str(datapoint), str(media_file)])["stdout"]
+        data = self.__execute(media_file, [str(datapoint)])
 
         if data.strip() == "":
             self.log.warning(

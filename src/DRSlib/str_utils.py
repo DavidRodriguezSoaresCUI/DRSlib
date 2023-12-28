@@ -1,7 +1,5 @@
 # pylint: disable=too-many-return-statements
-
-
-__doc__ = """
+"""
 String-focused utils
 ====================
 
@@ -11,8 +9,8 @@ Simple utils that accomplish one task well, specifically string operations.
 
 import re
 
-
 DOUBLE_QUOTE = '"'
+SI_SUFFIX = {"K": 1_000, "M": 1_000_000, "G": 1_000_000_000}
 
 
 def ensure_quoted_on_space(s: str) -> str:
@@ -114,3 +112,23 @@ def truncate_str(s: str, output_length: int, cut_location: str = "center") -> st
     raise ValueError(
         f"truncate_str: given parameter 'cut_location'={cut_location} is not in ['left','center','right'] !"
     )
+
+
+def human_parse_int(s: str) -> int | str:
+    """Decodes values such as:
+    - 12.5k => 12500
+    - -44G => -44000000
+    Returns int on success, str on failure
+    """
+    if len(s) < 1:
+        return s
+    if len(s) > 1 and (suffix := s[-1].upper()) in SI_SUFFIX:
+        try:
+            base_value = float(s[:-1])
+            return int(base_value * SI_SUFFIX[suffix])
+        except ValueError:
+            return s
+    try:
+        return int(s)
+    except ValueError:
+        return s

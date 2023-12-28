@@ -1,6 +1,4 @@
 # pylint: disable=broad-except, unnecessary-lambda-assignment
-
-
 """
 FileSystemDataBase
 ==================

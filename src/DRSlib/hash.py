@@ -7,9 +7,9 @@ Useful tools for easily hashing files.
 
 import hashlib
 import logging
+import zlib
 from pathlib import Path
 from typing import Dict, Optional
-import zlib
 
 from .os_detect import Os
 from .path_tools import ensure_dir_exists, file_collector

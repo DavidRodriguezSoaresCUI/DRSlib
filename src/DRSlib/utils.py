@@ -11,11 +11,11 @@ import pickle
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple, Union
 
-
 LOG = logging.getLogger(__file__)
 
-# Used to be: "[%(levelname)s:%(filename)s:%(lineno)d] %(message)s"
-LOG_FORMAT = "[%(levelname)s:%(funcName)s] %(message)s"
+LOG_FORMAT_VERBOSE = "[%(levelname)s:%(filename)s:%(lineno)d] %(message)s"
+LOG_FORMAT_EXTENDED = "[%(levelname)s:%(funcName)s] %(message)s"
+LOG_FORMAT_BASIC = "[%(levelname)s] %(message)s"
 
 
 def assertTrue(condition: bool, message: str, *arguments) -> None:

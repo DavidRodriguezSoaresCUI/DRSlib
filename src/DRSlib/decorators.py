@@ -13,6 +13,7 @@ Also, you can find :
 import cProfile
 import datetime
 import functools
+import inspect
 import logging
 import pickle
 import pstats
@@ -277,7 +278,6 @@ def cacheFS(cache_file_or_args: Union[Path, Any]) -> Callable:
         return {}
 
     cached_data: dict
-    cached_file: Path
 
     if callable(cache_file_or_args):
         # cacheFS was run without argument => default filename
@@ -291,5 +291,33 @@ def cacheFS(cache_file_or_args: Union[Path, Any]) -> Callable:
         cache_file = Path(f"{cache_file}.cacheFS")
 
     cached_data = load_cached_data(cache_file)
+
+    return actual_decorator
+
+
+def deprecated(reason: str) -> Callable:
+    """This is a decorator which can be used to mark functions
+    and classes as deprecated. It will result in a warning
+    when the function is used."""
+
+    def actual_decorator(user_function: Callable) -> Callable:
+        # maybe do something here
+
+        @functools.wraps(user_function)
+        def wrapper(*args, **kwargs):
+            _type = "class" if inspect.isclass(user_function) else "function"
+            _reason_suffix = "." if isinstance(reason, str) else ": " + reason
+            print(
+                f"Call to deprecated {_type} {user_function.__name__}{_reason_suffix}"
+            )
+            return user_function(*args, **kwargs)
+
+        return wrapper
+
+    if callable(reason):
+        # decorator_with_arguments was run without argument => use
+        # default values for expected arguments or raise error
+        user_function = reason
+        return actual_decorator(user_function)
 
     return actual_decorator

@@ -12,14 +12,15 @@ just in case. Class may be usefull for repeated calls to `collect` method.
 
 """
 
-from os import popen
-from pathlib import Path
-from send2trash import send2trash
-from shutil import copy2
-from typing import Union, List, Optional, Tuple
 import logging
 import re
 import sys
+from os import popen
+from pathlib import Path
+from shutil import copy2
+from typing import List, Optional, Tuple, Union
+
+from send2trash import send2trash
 
 from .execute import execute
 from .os_detect import Os
@@ -27,13 +28,48 @@ from .utils import assertTrue
 
 LOG = logging.getLogger(__file__)
 MAKE_FS_SAFE_PATTERN = re.compile(pattern=r'[\\/*?:"<>|]')
+FILESYSTEM_SAFE_CHARACTER_MAP = {
+    "<": "﹤",
+    ">": "﹥",
+    ":": "ː",
+    '"': "“",
+    "/": "⁄",
+    "\\": "∖",
+    "|": "⼁",
+    "?": "？",
+    "*": "﹡",
+}
+FS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
+}
 
 try:
     import win32api
 except ImportError:
     current_os = Os()
     if current_os.windows:
-        LOG.error("Could not load win32api !")
+        LOG.warning("Could not import optional dependency win32api; This shou")
 
 
 class FileCollector:
@@ -87,17 +123,43 @@ def file_collector(root: Path, pattern: str = "**/*.*") -> List[Path]:
     return files
 
 
-def make_FS_safe(s: str) -> str:
-    """File Systems don't accept all characters on file/directory names.
+def make_FS_safe(s: str, mode: str = "strip", len_limit: int = 200) -> str:
+    """File Systems don't accept all characters on file/directory names. This
+    function tries to make a file name that is acceptable for Windows and Linux systems.
+    Do not use this function on file names that include extension.
 
-    Return s with illegal characters stripped
+    `mode`: how to deal with a selection of illegal characters:
+     - 'strip': remove illegal characters
+     - 'utf-replace': replace illegal characters with similar utf characters
 
-    Note: OS/FS agnostic, applies a simple filter on characters: ``\\, /, *, ?, :, ", <, >, |``
+    `len_limit`: cut name so it's not too long and adds '…' at the end to mark the cut
+
+    Note: on all modes, non-printable ASCII characters are removed
     """
-    return re.sub(pattern=MAKE_FS_SAFE_PATTERN, repl="", string=s)
+    # remove non-printable ASCII characters
+    res = "".join(c for c in s if ord(c) >= 32)
+
+    # deal with some special characters
+    if mode == "strip":
+        res = re.sub(pattern=MAKE_FS_SAFE_PATTERN, repl="", string=s)
+    elif mode == "utf-replace":
+        res = "".join(FILESYSTEM_SAFE_CHARACTER_MAP.get(c, c) for c in s)
+    else:
+        raise ValueError(f"Unknown mode '{mode}'")
+
+    # Shorten name
+    res = res[: len_limit - 1] + "…" if len(res) > len_limit else res
+
+    # Avoid reserved names by adding a small suffix
+    if res in FS_RESERVED_NAMES:
+        res += "_"
+
+    return res
 
 
-def find_available_path(root: Path, base_name: str, file: bool = True) -> Path:
+def find_available_path(
+    root: Path, base_name: str, file: bool = True, file_ext: str = ""
+) -> Path:
     """Returns a path to a file/directory that DOESN'T already exist.
     The file/dir the user wishes to make a path for is referred as X.
 
@@ -117,14 +179,10 @@ def find_available_path(root: Path, base_name: str, file: bool = True) -> Path:
             yield f" ({idx})"
 
     # Iterate over candidate paths until an unused one is found
-    safe_base_name = make_FS_safe(base_name)
+    safe_base_name = make_FS_safe(base_name, len_limit=len(base_name))
     if file:
-        # name formatting has to keep the extension at the end of the name !
-        ext_idx = safe_base_name.rfind(".")
-        assertTrue(ext_idx != -1, "Can't find dot in name '{}'", safe_base_name)
-        f_name, f_ext = safe_base_name[:ext_idx], safe_base_name[ext_idx:]
         for suffix in suffixes():
-            _object = root / (f_name + suffix + f_ext)
+            _object = root / (safe_base_name + suffix + file_ext)
             if not _object.is_file():
                 return _object
     else:
@@ -292,7 +350,7 @@ def windows_list_logical_drives() -> List[Path]:
                 if item[0].isupper() and item[1] == ":":
                     try:
                         # Bugfix : the '<driveletter>:' format was resolving to CWD when driveletter==CWD's driveletter.
-                        # This seems to be an expected Windows behavior. Fix: switch to '<driveletter>:\\' format, whis is more appropriate.
+                        # This seems to be an expected Windows behavior. Fix: switch to '<driveletter>:\\' format, which is more appropriate.
                         yield Path(item[:2] + "\\").resolve()
                     except Exception:  # nosec B112
                         continue

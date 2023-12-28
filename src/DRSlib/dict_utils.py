@@ -6,9 +6,9 @@ Methods that perform simple but convenient operations,
 specifically on dictionnaries
 """
 
-from typing import Any, Dict, List, Set
+from typing import Any, Callable, Dict, List, Set
 
-from .utils import assertTrue
+from .utils import assertTrue, cast_number
 
 
 def flatten_dict_join(d: Dict[str, Any]) -> Dict[str, Any]:
@@ -105,3 +105,80 @@ def dict_list_keys(d: dict) -> List[str]:
         add_item_to_set_or_warn(keys, k)
 
     return list(sorted(keys))
+
+
+class ChangeDetectDict(dict):
+    """Normal dict but has the ability to detect if it was edited since initialization.
+    Should be initialised from method from_dict"""
+
+    EDIT_DETECT_FIELD: str = "__edit_detect__"
+
+    def __setitem__(self, __key, __value) -> None:
+        """Records that dict was edited"""
+        setattr(self, ChangeDetectDict.EDIT_DETECT_FIELD, True)
+        super().__setitem__(__key, __value)
+
+    def __delitem__(self, __key) -> None:
+        """Records that dict was edited"""
+        setattr(self, ChangeDetectDict.EDIT_DETECT_FIELD, True)
+        super().__delitem__(__key)
+
+    @property
+    def was_edited(self) -> bool:
+        """Returns true if dict was edited"""
+        return getattr(self, ChangeDetectDict.EDIT_DETECT_FIELD, False)
+
+    @staticmethod
+    def from_dict(d: dict) -> "ChangeDetectDict":
+        """Creates instance of ChangeDetectDict from dict"""
+        instance = ChangeDetectDict(d)
+        setattr(instance, ChangeDetectDict.EDIT_DETECT_FIELD, False)
+        return instance
+
+
+def dict_try_casting_values(
+    data: dict,
+    in_place: bool = False,
+    cast_numbers: bool = True,
+    cast_bool: dict[str, bool] | None = None,
+    external_mapper: Callable[[str], Any] | None = None,
+) -> dict:
+    """Attempts casting dictionnary values
+    `in_place`: True: edit values in place and return input dict; False: return a new dict
+    `cast_numbers`: if True, attempts to cast numbers from strings, eg: "-23" (str) -> -23 (int), "3.14" (str) -> 3.14 (float)
+    `cast_bool`: allow for casting boolean values given mapping
+    `external_mapper`: allow for more advanced mapping (see `str_utils.human_parse_int`)
+    """
+    if not data:
+        return {}
+
+    input_data, output_data = data, data if in_place else {}
+    do_cast_bool = cast_bool is not None and len(cast_bool) > 0
+    do_external_cast = external_mapper is not None
+
+    def best_effort_casting_str(v: str):
+        if cast_numbers:
+            _value = cast_number(v)
+            if isinstance(_value, (int, float)):
+                return _value
+        if do_cast_bool and v in cast_bool:
+            return cast_bool[v]
+        if do_external_cast:
+            return external_mapper(v)
+        return v
+
+    def best_effort_casting(v: Any):
+        if isinstance(v, dict):
+            return dict_try_casting_values(
+                v, in_place, cast_numbers, cast_bool, external_mapper
+            )
+        if isinstance(v, list):
+            return [best_effort_casting(vv) for vv in v]
+        if isinstance(v, str):
+            return best_effort_casting_str(v)
+        return v
+
+    for k, v in input_data.items():
+        output_data[k] = best_effort_casting(v)
+
+    return output_data

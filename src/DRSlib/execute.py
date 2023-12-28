@@ -1,6 +1,4 @@
 # pylint: disable=broad-except
-
-
 """
 Shell command execution
 =======================
@@ -15,6 +13,7 @@ import sys
 import threading
 import time
 from collections import deque
+from multiprocessing.managers import DictProxy
 from os import PathLike
 from pathlib import Path
 from typing import Any, Dict, Sequence, Union
@@ -24,7 +23,7 @@ import psutil
 
 from .os_detect import Os
 from .str_utils import ensure_quoted_on_space
-from .utils import assertTrue
+from .utils import assertTrue, cast_number
 
 DETECTED_OS = Os()
 OS_IS_UNIX = (
@@ -218,12 +217,12 @@ def debug_execute(commands_list: COMMAND_TYPE):
     return resource_usages
 
 
-def get_target_process(master_process):
+def get_target_process(master_process: subprocess.Popen) -> subprocess.Popen:
+    """Linux-specific; Wait for time to load the target process, then proceed"""
     if DETECTED_OS.linux:
         # Only in linux, we target command will be GNU Time's child process
         # If we are using GNU Time and are on linux:
         # Wait for time to load the target process, then proceed
-        # Depending on whether we are on linux or not
 
         # Wait for /usr/bin/time to start the target command
         while True:
@@ -334,7 +333,9 @@ def read_gnu_time(time_tmp_output_file: Path) -> Dict[str, Any]:
     return gnu_times_dict
 
 
-def collect_time_series(shared_process_dict):
+def collect_time_series(shared_process_dict: DictProxy) -> None:
+    """Collects time series into dict argument"""
+
     while shared_process_dict["target_process_pid"] == -1:
         pass
 

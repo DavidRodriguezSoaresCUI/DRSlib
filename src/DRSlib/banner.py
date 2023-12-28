@@ -11,10 +11,10 @@ All formatters should have signature `(title: str, width: int = DEFAULT_BANNER_W
 (or compatible) and (for formatters in banner.py) have an entry in global dictionnary `style_switch`.
 """
 
-from typing import Callable, Any, Union
 import functools
 import shutil
 from pathlib import Path
+from typing import Any, Callable, Union
 
 DEFAULT_BANNER_WIDTH = min(shutil.get_terminal_size().columns, 40)
 

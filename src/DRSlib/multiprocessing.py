@@ -1,3 +1,4 @@
+# pylint: disable=too-few-public-methods, abstract-method
 """
 Multiprocessing
 ===============
@@ -11,6 +12,8 @@ from typing import Any, Callable, List, Tuple
 
 
 class NoDaemonProcess(multiprocessing.Process):
+    """Patches Process to not allow deamon processes"""
+
     @property
     def daemon(self):
         return False
@@ -21,15 +24,24 @@ class NoDaemonProcess(multiprocessing.Process):
 
 
 class NoDaemonContext(type(multiprocessing.get_context())):
+    """DContext that does not allow deamon processes"""
+
     Process = NoDaemonProcess
 
 
 # We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
 # because the latter is only a wrapper function, not a proper class.
 class NestablePool(Pool):
+    """Based on multiprocessing.pool.Pool but allows subprocesses to
+    create their own subprocesses, by making them non-deamonic.
+    Only appropriate where all parents are waiting for children to finish.
+    Use with caution (recursive runaway is very possible)
+    Probably inspired from https://stackoverflow.com/a/8963618
+    """
+
     def __init__(self, *args, **kwargs):
         kwargs["context"] = NoDaemonContext()
-        super(NestablePool, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class SimpleMultiProcessing:

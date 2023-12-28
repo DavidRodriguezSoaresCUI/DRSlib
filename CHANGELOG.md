@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.9.0] - 28.12.2023
+
+### Added
+
+- ``decorators``: added the ``deprecated`` decorator for marking deprecated functions/classes
+- ``dict_utils``: added the ``ChangeDetectDict``, a dictionary with the added functionality to detect if it has changed since being created (from another dict); also added the ``dict_try_casting_values`` method, that allows for complex (and recursive) value casting in dictionaries
+- ``str_utils``: added the ``human_parse_int`` method to allow parsing of values like ``-11.4k`` and ``4G``
+- ``stream``: added the new module; contains facilities to handle data flows similarly to Java's Stream API
+- ``web_crawl``: added the new module; contains web-crawling-related functions; still in early development
+
+### Changed
+
+- ``cli_ui``: refactored to not have to use ``eval``
+- ``execute``: added some type hints
+- ``mediainfo``: begun a major rewrite, centered around the switch to MediaInfo's JSON output to simplify parsing /!\ breaking changes, with more to come
+- ``path_tools``: major rewrite of ``make_FS_safe`` to more reliably avoid problematic names
+- ``utils``: diversified LOG formats (/!\ breaking change ``LOG_FORMAT -> LOG_FORMAT_EXTENDED``)
+
 ## [0.8.0] - 06.08.2023
 
 Bump in minor version justified by extensive changes

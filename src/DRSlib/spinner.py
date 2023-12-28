@@ -1,7 +1,5 @@
 ﻿# pylint: disable=broad-except
-
-
-__doc__ = """
+"""
 CLI text-based spinning animation
 =================================
 
@@ -11,6 +9,7 @@ An exceedingly simplistic progress animation library.
 import itertools
 import os
 import sys
+
 from .str_utils import truncate_str
 
 
