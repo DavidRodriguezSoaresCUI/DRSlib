@@ -106,7 +106,7 @@ class Interval:
         """Basic math representation: [<left>,<right>]"""
         return f"[{self.left},{self.right}]"
 
-    def split(self, x: Numerical) -> Tuple["Interval"]:
+    def split(self, x: Numerical) -> Tuple["Interval", "Interval"]:
         """Split interval in two. If not possible, raise error"""
         if not self.contains(x, strict=True):
             raise InvalidInterval(

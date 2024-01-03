@@ -2,7 +2,7 @@
 Hash-related tools
 ==================
 
-Useful tools for easily hashing files.
+Useful tools for easily hashing files. See crctools.utils for more functions.
 """
 
 import hashlib

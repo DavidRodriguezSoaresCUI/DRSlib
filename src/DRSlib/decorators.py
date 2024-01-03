@@ -15,10 +15,8 @@ import datetime
 import functools
 import inspect
 import logging
-import pickle
 import pstats
 import time
-from pathlib import Path
 from typing import Any, Callable, Union
 
 from .utils import assertTrue
@@ -234,65 +232,65 @@ def log_to_file(user_function: Callable) -> Callable:
 ########### caching ###########
 
 
-def cacheFS(cache_file_or_args: Union[Path, Any]) -> Callable:
-    """
-    Returns a decorator that caches the returned value of user function using a cache file.
-    """
+# def cacheFS(cache_file_or_args: Union[Path, Any]) -> Callable:
+#     """
+#     Returns a decorator that caches the returned value of user function using a cache file.
+#     """
 
-    def actual_decorator(user_function: Callable) -> Callable:
-        """Caches the returned value of user function using a cache file."""
+#     def actual_decorator(user_function: Callable) -> Callable:
+#         """Caches the returned value of user function using a cache file."""
 
-        @functools.wraps(user_function)
-        def wrapper(*args, **kwargs) -> Any:
-            nonlocal user_function, cache_file, cached_data  # type: ignore[misc]
+#         @functools.wraps(user_function)
+#         def wrapper(*args, **kwargs) -> Any:
+#             nonlocal user_function, cache_file, cached_data  # type: ignore[misc]
 
-            k = (args, frozenset(kwargs.items()))
-            if k in cached_data:
-                # cache hit
-                print(
-                    f"Cache hit for {user_function.__name__} with args={args} and kwargs={kwargs}."
-                )
-                return cached_data[k]
+#             k = (args, frozenset(kwargs.items()))
+#             if k in cached_data:
+#                 # cache hit
+#                 print(
+#                     f"Cache hit for {user_function.__name__} with args={args} and kwargs={kwargs}."
+#                 )
+#                 return cached_data[k]
 
-            # else: cache miss
-            res = user_function(*args, **kwargs)
-            cached_data[k] = res
-            with cache_file.open(mode="wb") as f:
-                pickle.dump(cached_data, f)  # update cache
+#             # else: cache miss
+#             res = user_function(*args, **kwargs)
+#             cached_data[k] = res
+#             with cache_file.open(mode="wb") as f:
+#                 pickle.dump(cached_data, f)  # update cache
 
-            print(f"Written cache to file '{cache_file}'.")
+#             print(f"Written cache to file '{cache_file}'.")
 
-            return res
+#             return res
 
-        return wrapper
+#         return wrapper
 
-    def load_cached_data(cache_file: Path) -> dict:
-        if cache_file.is_file():
-            try:
-                with cache_file.open(mode="rb") as f:
-                    cached_data = pickle.load(f)
-            except EOFError:
-                pass  # cache file exists but doesn't contain anything/valid data
-            else:
-                return cached_data
-        return {}
+#     def load_cached_data(cache_file: Path) -> dict:
+#         if cache_file.is_file():
+#             try:
+#                 with cache_file.open(mode="rb") as f:
+#                     cached_data = pickle.load(f)
+#             except EOFError:
+#                 pass  # cache file exists but doesn't contain anything/valid data
+#             else:
+#                 return cached_data
+#         return {}
 
-    cached_data: dict
+#     cached_data: dict
 
-    if callable(cache_file_or_args):
-        # cacheFS was run without argument => default filename
-        cache_file = Path(f"{cache_file_or_args.__name__}.cacheFS")
-        cached_data = load_cached_data(cache_file)
-        return actual_decorator(cache_file_or_args)
+#     if callable(cache_file_or_args):
+#         # cacheFS was run without argument => default filename
+#         cache_file = Path(f"{cache_file_or_args.__name__}.cacheFS")
+#         cached_data = load_cached_data(cache_file)
+#         return actual_decorator(cache_file_or_args)
 
-    # else: cacheFS was run with argument
-    # File Extension enforcement
-    if cache_file_or_args.suffix != ".cacheFS":
-        cache_file = Path(f"{cache_file}.cacheFS")
+#     # else: cacheFS was run with argument
+#     # File Extension enforcement
+#     if cache_file_or_args.suffix != ".cacheFS":
+#         cache_file = Path(f"{cache_file}.cacheFS")
 
-    cached_data = load_cached_data(cache_file)
+#     cached_data = load_cached_data(cache_file)
 
-    return actual_decorator
+#     return actual_decorator
 
 
 def deprecated(reason: str) -> Callable:

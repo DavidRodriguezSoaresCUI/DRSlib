@@ -302,7 +302,7 @@ def folder_get_file_count(_root: Path, use_fallback: bool = False) -> int:
         )
         return fallback()
 
-    return int(popen(command).read().strip())
+    return int(popen(command).read().strip())  # nosec B605
 
 
 def folder_get_subdirs(root_dir: Path) -> List[Path]:

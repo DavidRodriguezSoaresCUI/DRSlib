@@ -9,15 +9,17 @@ callable from a terminal.
 """
 import json
 import logging
+from os import PathLike
 import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Union
 
+from .dict_utils import dict_try_casting_values
 from .execute import execute
 from .list_utils import flatten_list
 from .str_utils import human_parse_int
-from .utils import cast_number, dict_try_casting_values, type_assert
+from .utils import cast_number, type_assert
 
 MEDIAINFO_POSSIBLE_RETURN_VALUES = Union[int, float, str, None]
 
@@ -233,7 +235,7 @@ class MediaInfo:
         output_format: str | None = "JSON",
     ) -> str:
         """Executes mediainfo on given file with given arguments"""
-        cmd = [self.executable]
+        cmd: list[Union[str, bytes, PathLike[str], PathLike[bytes]]] = [self.executable]
         if media_file is not None:
             cmd.append(media_file)
         if arguments:

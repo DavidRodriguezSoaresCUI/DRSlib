@@ -161,10 +161,10 @@ def dict_try_casting_values(
             _value = cast_number(v)
             if isinstance(_value, (int, float)):
                 return _value
-        if do_cast_bool and v in cast_bool:
-            return cast_bool[v]
+        if do_cast_bool and v in cast_bool:  # type: ignore[operator]
+            return cast_bool[v]  # type: ignore[index]
         if do_external_cast:
-            return external_mapper(v)
+            return external_mapper(v)  # type: ignore[misc]
         return v
 
     def best_effort_casting(v: Any):

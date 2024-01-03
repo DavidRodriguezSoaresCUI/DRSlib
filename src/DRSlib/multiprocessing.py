@@ -11,6 +11,9 @@ from multiprocessing.pool import Pool
 from typing import Any, Callable, List, Tuple
 
 
+MULTIPROCESSING_CONTEXT_TYPE: type = type(multiprocessing.get_context())
+
+
 class NoDaemonProcess(multiprocessing.Process):
     """Patches Process to not allow deamon processes"""
 
@@ -23,7 +26,7 @@ class NoDaemonProcess(multiprocessing.Process):
         pass
 
 
-class NoDaemonContext(type(multiprocessing.get_context())):
+class NoDaemonContext(MULTIPROCESSING_CONTEXT_TYPE):
     """DContext that does not allow deamon processes"""
 
     Process = NoDaemonProcess

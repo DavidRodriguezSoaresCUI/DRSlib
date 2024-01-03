@@ -7,6 +7,7 @@ Sometimes we just want to execute a shell command and possibly
 retrieve stdout/stderr, without hassle.
 """
 
+import collections
 import multiprocessing
 import subprocess  # nosec
 import sys
@@ -16,9 +17,9 @@ from collections import deque
 from multiprocessing.managers import DictProxy
 from os import PathLike
 from pathlib import Path
-from typing import Any, Dict, Sequence, Union
+from typing import Dict, Sequence, Union
 
-import numpy as np
+# import numpy as np
 import psutil
 
 from .os_detect import Os
@@ -57,12 +58,21 @@ def execute(command: COMMAND_TYPE, shell: bool = False) -> Dict[str, str]:
         raise
 
 
+def __cmd_is_sequence(command: COMMAND_TYPE) -> bool:
+    """Needed for differentiated command manipulation"""
+    return isinstance(command, collections.abc.Sequence) and not isinstance(
+        command, str
+    )
+
+
 def command_to_string(command: COMMAND_TYPE) -> str:
     """Returns string representation for command"""
-    return " ".join(
-        ensure_quoted_on_space(x)
-        for x in [c if isinstance(c, str) else str(c) for c in command]
-    )
+    if __cmd_is_sequence(command):
+        return " ".join(
+            ensure_quoted_on_space(x)
+            for x in [c if isinstance(c, str) else str(c) for c in command]  # type: ignore[union-attr]
+        )
+    return command if isinstance(command, str) else str(command)
 
 
 # The following code was adapted from https://github.com/manzik/cmdbench
@@ -71,16 +81,19 @@ def command_to_string(command: COMMAND_TYPE) -> str:
 def debug_execute(commands_list: COMMAND_TYPE):
     """Execute command and get resource usage statistics"""
     time_tmp_output_file = None
+    _cmd: list = (
+        list(commands_list) if __cmd_is_sequence(commands_list) else [commands_list]  # type: ignore[arg-type]
+    )
 
     if DETECTED_OS.linux:
         # Preprocessing: Wrap the target command around the GNU Time command
         time_tmp_output_file = Path("./.time.tmp")
-        commands_list = [
+        _cmd = [
             "/usr/bin/time",
             "-o",
             time_tmp_output_file,
             "-v",
-        ] + commands_list
+        ] + _cmd
 
     # START: Initialization
 
@@ -89,11 +102,9 @@ def debug_execute(commands_list: COMMAND_TYPE):
 
     # Time series data
     # We don't need fast read access, we need fast insertion so we use deque
-    sample_milliseconds, cpu_percentages, memory_values = (
-        deque([]),
-        deque([]),
-        deque([]),
-    )
+    sample_milliseconds: deque[float] = deque([])
+    cpu_percentages: deque[float] = deque([])
+    memory_values: deque[float] = deque([])
 
     manager = multiprocessing.Manager()
     shared_process_dict_template = {
@@ -117,6 +128,7 @@ def debug_execute(commands_list: COMMAND_TYPE):
 
     # Linux: Processes are faster than threads
     # Windows: Both are as fast but processes take longer to start
+    time_series_exec: multiprocessing.Process | threading.Thread
     if DETECTED_OS.linux:
         time_series_exec = multiprocessing.Process(
             target=collect_time_series, args=(shared_process_dict,)
@@ -129,9 +141,7 @@ def debug_execute(commands_list: COMMAND_TYPE):
 
     # Finally, run the command
     # Master process could be GNU Time running target command or the target command itself
-    master_process = psutil.Popen(
-        commands_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    master_process = psutil.Popen(_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     execution_start = time.time()
 
     # p is always the target process to monitor
@@ -152,18 +162,20 @@ def debug_execute(commands_list: COMMAND_TYPE):
     time_series_exec.join()
 
     # Collect data from other (threads or processes) and store them
-    cpu_times = shared_process_dict["cpu_times"]
+    cpu_times: dict | None = shared_process_dict["cpu_times"]
     disk_io_counters = shared_process_dict["disk_io_counters"]
 
     memory_max = shared_process_dict["memory_max"]
     memory_perprocess_max = shared_process_dict["memory_perprocess_max"]
 
-    sample_milliseconds = shared_process_dict["sample_milliseconds"]
-    cpu_percentages = shared_process_dict["cpu_percentages"]
-    memory_values = shared_process_dict["memory_values"]
+    sample_milliseconds = shared_process_dict["sample_milliseconds"]  # type: ignore[assignment]
+    cpu_percentages = shared_process_dict["cpu_percentages"]  # type: ignore[assignment]
+    memory_values = shared_process_dict["memory_values"]  # type: ignore[assignment]
 
     # Calculate and store proper values for cpu and disk
     # https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
+    cpu_system_time: float
+    cpu_user_time: float
     if cpu_times is None:
         # macOS and Windows where cpu_times always returns 0 for children's cpu usage
         # Then we have calculated this info ourselves in other threads (collect_time_series, specifically)
@@ -171,18 +183,18 @@ def debug_execute(commands_list: COMMAND_TYPE):
         assertTrue(
             DETECTED_OS.mac or DETECTED_OS.windows, "cpu_used should not be None"
         )
-        cpu_user_time = shared_process_dict["children_user_cpu_time"]
-        cpu_system_time = shared_process_dict["children_system_cpu_time"]
+        cpu_user_time = shared_process_dict["children_user_cpu_time"]  # type: ignore[assignment]
+        cpu_system_time = shared_process_dict["children_system_cpu_time"]  # type: ignore[assignment]
     else:
-        cpu_user_time = cpu_times.user + cpu_times.children_user
-        cpu_system_time = cpu_times.system + cpu_times.children_system
+        cpu_user_time = cpu_times.user + cpu_times.children_user  # type: ignore[assignment]
+        cpu_system_time = cpu_times.system + cpu_times.children_system  # type: ignore[assignment]
 
     cpu_total_time = cpu_user_time + cpu_system_time
 
     # Convert deques to numpy arrays
-    sample_milliseconds = np.array(sample_milliseconds)
-    cpu_percentages = np.array(cpu_percentages)
-    memory_values = np.array(memory_values)
+    # sample_milliseconds = np.array(sample_milliseconds)
+    # cpu_percentages = np.array(cpu_percentages)
+    # memory_values = np.array(memory_values)
 
     # Collect info from GNU Time if it's linux
     gnu_times_dict = read_gnu_time(time_tmp_output_file)
@@ -201,7 +213,7 @@ def debug_execute(commands_list: COMMAND_TYPE):
             "process": {"execution_time_s": exection_end - execution_start},
         },
         "general": {  # Info independent from GNU Time and psutil
-            "command": command_to_string(commands_list),
+            "command": command_to_string(_cmd),
             "stdout": stdout,
             "stderr": stderr,
             "exit_code": gnu_times_dict["Exit status"]
@@ -217,7 +229,7 @@ def debug_execute(commands_list: COMMAND_TYPE):
     return resource_usages
 
 
-def get_target_process(master_process: subprocess.Popen) -> subprocess.Popen:
+def get_target_process(master_process: psutil.Popen) -> psutil.Popen | psutil.Process:
     """Linux-specific; Wait for time to load the target process, then proceed"""
     if DETECTED_OS.linux:
         # Only in linux, we target command will be GNU Time's child process
@@ -230,9 +242,10 @@ def get_target_process(master_process: subprocess.Popen) -> subprocess.Popen:
             if master_process_retcode is not None or not master_process.is_running():
                 break
 
-            time_children = master_process.children(recursive=False)
-            if len(time_children) > 0 and time_children[0] is not None:
-                return time_children[0]
+        time_children = master_process.children(recursive=False)
+        if len(time_children) > 0 and time_children[0] is not None:
+            return time_children[0]
+        raise ValueError("Failed to get timing process")
     else:
         # On other platforms, the main process will be the target process itself
         return master_process
@@ -291,22 +304,23 @@ def add_disk_usage(disk_io_counters, resource_usages) -> None:
     resource_usages["psutil"]["disk"] = {"io_counters": io}
 
 
-def read_gnu_time(time_tmp_output_file: Path) -> Dict[str, Any]:
+def read_gnu_time(
+    time_tmp_output_file: Path | None,
+) -> Dict[str, Union[int, float, str]]:
     """Read GNU Time command's output and returns it parsed into a python dictionary"""
     if not DETECTED_OS.linux:
         return {}
-    assertTrue(
-        time_tmp_output_file is not None and time_tmp_output_file.exists(),
-        "Expected file {} is None or doesn't exist",
-        time_tmp_output_file,
-    )
+    if time_tmp_output_file is None or not time_tmp_output_file.exists():
+        raise ValueError(
+            f"Expected file {time_tmp_output_file} is None or doesn't exist"
+        )
 
     gnu_times_lines = [
         line.strip()
         for line in time_tmp_output_file.read_text(encoding="utf8").splitlines()
     ]
     time_tmp_output_file.unlink()
-    gnu_times_dict = {}
+    gnu_times_dict: Dict[str, str] = {}
     for gnu_times_line in gnu_times_lines:
         tokens = list(map(lambda token: token.strip(), gnu_times_line.rsplit(": ", 1)))
         if len(tokens) < 2:
@@ -320,17 +334,19 @@ def read_gnu_time(time_tmp_output_file: Path) -> Dict[str, Any]:
     gnu_times_dict[gnu_time_elapsed_wall_clock_key] = str(
         get_sec(gnu_times_dict[gnu_time_elapsed_wall_clock_key])
     )
-    # And another conversion for cpu utilization percentage string
-    gnu_time_job_cpu_percent = "Percent of CPU this job got"
-    gnu_times_dict[gnu_time_job_cpu_percent] = float(
-        gnu_times_dict[gnu_time_job_cpu_percent].replace("%", "")
-    )
 
     # Convert all gnu time output's int values to int and float values to float
+    gnu_times_converted = {}
     for key, value in gnu_times_dict.items():
-        gnu_times_dict[key] = cast_number(value)
+        gnu_times_converted[key] = cast_number(value)
 
-    return gnu_times_dict
+    # And another conversion for cpu utilization percentage string
+    gnu_time_job_cpu_percent = "Percent of CPU this job got"
+    gnu_times_converted[gnu_time_job_cpu_percent] = float(
+        gnu_times_converted[gnu_time_job_cpu_percent].replace("%", "")  # type: ignore[union-attr]
+    )
+
+    return gnu_times_converted
 
 
 def collect_time_series(shared_process_dict: DictProxy) -> None:
@@ -352,13 +368,13 @@ def collect_time_series(shared_process_dict: DictProxy) -> None:
     # Set for faster "in" operation
     monitoring_process_children_set = set()
     # List for actual process access
-    monitoring_process_children = []
+    monitoring_process_children: list[psutil.Process] = []
 
     # If we were able to access the process info at least once without access denied error
     had_permission = False
 
     # For macOS and Windows. Will be used for final user and system cpu time calculation
-    children_cpu_times = []
+    children_cpu_times: list[tuple[int, int, int, int]] = []
 
     while True:
         # retcode would be None while subprocess is running
@@ -396,7 +412,7 @@ def collect_time_series(shared_process_dict: DictProxy) -> None:
                     ):  # psutil calculates children usage for us on linux. Otherwise we save the values ourselved
                         children_cpu_times[
                             child_index
-                        ] = target_child_process.cpu_times()
+                        ] = target_child_process.cpu_times()  # type: ignore[assignment]
                     child_cpu_usage = target_child_process.cpu_percent()
                     cpu_percentage += child_cpu_usage
                 # Add children not already in our monitoring_process_children

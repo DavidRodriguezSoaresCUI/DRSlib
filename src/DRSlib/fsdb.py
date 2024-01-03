@@ -7,7 +7,6 @@ A collection of tools for having a cached representation of
 a file system.
 """
 
-import ast
 import json
 import logging
 import re
@@ -81,7 +80,7 @@ class CachedFS:
                 self.root,
             )
             self.filter_text = backup_fs["filter"]
-            self.filter = ast.literal_eval(backup_fs["filter"])
+            self.filter = eval(backup_fs["filter"])  # nosec B307
             self.fs = backup_fs["fs"]
 
         else:
@@ -102,7 +101,10 @@ class CachedFS:
                 ]
             )
             self.filter_text = f"lambda x: {condition}"
-            self.filter = ast.literal_eval(self.filter_text)
+            try:
+                self.filter = eval(self.filter_text)  # nosec B307
+            except ValueError as e:
+                raise ValueError(f"Couldn't parse filter '{self.filter_text}'") from e
             self.update()
 
     @timer

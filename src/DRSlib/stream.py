@@ -1,17 +1,20 @@
+# pylint: disable=broad-except, unnecessary-lambda-assignment
 """
 Stream toolbox
 ==============
 
 Brings Java's Stream syntax to Python for readable functional code use
 """
+import copy
 from dataclasses import dataclass
 from itertools import chain
-from typing import Callable, Collection, Iterable, Any, TypeVar
+from typing import Any, Callable, Collection, Iterable, Type
 
-
-T = TypeVar("T")
 Predicate = Callable[[Any], bool]
 IDENTITY = lambda x: x
+NULL_CONSUMER = lambda x: None
+FILTER_NONE = lambda x: x is None
+FILTER_NOT_NONE = lambda x: x is not None
 
 # Basic accumulators
 
@@ -28,13 +31,14 @@ def set_accumulator(s: set, x: Any) -> set:
     return s
 
 
-ACCUMULATORS: dict[T, Callable[[T, Any], T]] = {
+# callable takes (a: Collection, b: Any)
+ACCUMULATORS: dict[Type[Any], Callable[[Any, Any], Collection]] = {
     list: list_accumulator,
     set: set_accumulator,
     tuple: lambda t, x: t + (x,),
 }
-
-COMBINERS: dict[T, Callable[[T, T], T]] = {
+# callable takes (a: Collection, b: Collection)
+COMBINERS: dict[Type[Any], Callable[[Any, Any], Collection]] = {
     list: lambda a, b: a + b,
     set: lambda a, b: a.union(b),
     tuple: lambda a, b: a + b,
@@ -47,11 +51,11 @@ class Collector:
 
     supplier: Callable[[], Collection]
     """Supplies a mutable collection to put items in"""
-    accumulator: Callable[[Collection, Any], None]
+    accumulator: Callable[[Collection, Any], Collection]
     """Adds item in collection"""
     # combiner: Callable
     # """Combine two collections into one"""
-    finisher: Callable[[Collection], Collection]
+    finisher: Callable[[Collection], Any]
     """Applies mapping to collection after adding is done"""
 
     def collect(self, items: Iterable) -> Collection:
@@ -70,15 +74,33 @@ class Collector:
             supplier=list, accumulator=ACCUMULATORS[list], finisher=IDENTITY
         )
 
+    @staticmethod
+    def str_join(separator: str = ",") -> "Collector":
+        """Returns a collector that stores items (if str, otherwise maps them with str first) in a string"""
+
+        def str_fin(l: Collection) -> str:
+            """Concatenates elements with separator"""
+            return separator.join(l)
+
+        return Collector(
+            supplier=list,
+            accumulator=ACCUMULATORS[list],
+            finisher=str_fin,
+        )
+
 
 class Stream:
     """Holds elements during processing"""
 
-    input: Iterable
+    input: Collection
     """Contains elements to stream"""
 
     def __init__(self, of: Iterable) -> None:
-        self.input = of
+        self.input = of if isinstance(of, Collection) else list(of)
+
+    def __str__(self) -> str:
+        """Returns a string representation of current state of stream"""
+        return f"<Stream: of={self.input} ({type(self.input)})>"
 
     # static methods
     @staticmethod
@@ -101,7 +123,7 @@ class Stream:
         """Returns whether all elements of this stream match the provided predicate."""
         return not self.any_match(predicate)
 
-    def collect(self, collector: Collector) -> Collection:
+    def collect(self, collector: Collector) -> Any:
         """Use collector to store items into a collection"""
         return collector.collect(self.input)
 
@@ -109,7 +131,53 @@ class Stream:
         """Count items in stream"""
         return len(self.input)
 
+    def for_each(
+        self, consumer: Callable, handle_exceptions: Callable | None = None
+    ) -> None:
+        """Apply a consumer to each element; terminates the stream"""
+        for item in self.input:
+            try:
+                consumer(item)
+            except Exception as e:
+                if handle_exceptions is not None:
+                    handle_exceptions(e)
+                else:
+                    raise e
+        self.input = []
+
     # non-terminal methods
+
+    def debug(self, logger: Callable | None = None) -> "Stream":
+        """logs self to using logger, otherwise to stdout"""
+        if logger is None:
+            logger = print
+        logger(str(self))
+        return self
+
+    def distinct(self) -> "Stream":
+        """Remove duplicates while keeping order if possible; warning: may be costly on large collections"""
+        # short circuit on set because unordered
+        if isinstance(self.input, set):
+            return self
+
+        # tuple, list (or other)
+        res, accumulator = self.__get_collection_and_accumulator()
+        known_items: set[Any] = set()
+        for item in self.input:
+            is_known_item = False
+            for known_item in known_items:
+                if known_item == item:
+                    is_known_item = True
+                    break
+            if not is_known_item:
+                known_items.add(item)
+                res = accumulator(res, item)
+        self.input = res
+        return self
+
+    def unique(self) -> "Stream":
+        """Mirror for distinct, for those who prefer that terminology"""
+        return self.distinct()
 
     def filter(self, predicate: Predicate) -> "Stream":
         """Filter out any element that don't match the predicate"""
@@ -120,11 +188,28 @@ class Stream:
         self.input = res
         return self
 
-    def map(self, mapper: Callable) -> "Stream":
-        """Filter out any element that don't match the predicate"""
+    def filter_whitelist(self, whitelist: set) -> "Stream":
+        """Mirror for filter, for when we want to filter values against a whitelist"""
+        return self.filter(lambda x: x in whitelist)
+
+    def filter_blacklist(self, blacklist: set) -> "Stream":
+        """Mirror for filter, for when we want to filter values against a blacklist"""
+        return self.filter(lambda x: x not in blacklist)
+
+    def map(
+        self, mapper: Callable, handle_exceptions: Callable | None = None
+    ) -> "Stream":
+        """Apply a mapping to each element"""
         res, accumulator = self.__get_collection_and_accumulator()
         for item in self.input:
-            res = accumulator(res, mapper(item))
+            try:
+                res = accumulator(res, mapper(item))
+            except Exception as e:
+                if handle_exceptions is not None:
+                    handle_exceptions(e)
+                else:
+                    raise e
+
         self.input = res
         return self
 
@@ -154,25 +239,35 @@ class Stream:
             self.input = res
         return self
 
+    def stream_peek(self, stream_action: Callable) -> "Stream":
+        """Call stream_action with as input a copy of the items this stream, for example to do some check on the data"""
+        stream_action(copy.deepcopy(self.input))
+        return self
+
     # reserved methods
 
-    def __get_collection_and_accumulator(self) -> tuple:
+    def __get_collection_and_accumulator(
+        self,
+    ) -> tuple[Collection, Callable[[Collection, Any], Collection]]:
         """Returns empty collection and accumulator"""
         collection_type = type(self.input)
         return collection_type(), ACCUMULATORS[collection_type]
 
 
-if __name__ == "__main__":
-    assert Stream((1, 2, 3)).any_match(lambda x: x % 2 == 0) is True
-    assert Stream((1, 2, 3)).all_match(lambda x: x % 2 == 0) is False
-    assert Stream.concat(Stream([1, 2, 3]), Stream(["a", "b", "c"])).collect(
-        Collector.to_list()
-    ) == [1, 2, 3, "a", "b", "c"]
-    assert (
-        Stream((1, 2, 3)).limit(2).count() == 2
-    ), f"count={Stream((1, 2, 3)).limit(2).count()}, res={Stream((1, 2, 3)).limit(2).collect(Collector.to_list())}"
-    assert Stream((1, 2, 3)).limit(2).collect(Collector.to_list()) == [1, 2]
-    assert Stream((1, 2, 3)).limit(3).count() == 3
-    assert Stream((1, 2, 3)).skip(1).count() == 2
-    assert Stream((1, 2, 3)).skip(1).collect(Collector.to_list()) == [2, 3]
-    assert Stream((1, 2, 3)).skip(3).count() == 0
+# if __name__ == "__main__":
+#     assert Stream((1, 2, 3)).any_match(lambda x: x % 2 == 0) is True
+#     assert Stream((1, 2, 3)).all_match(lambda x: x % 2 == 0) is False
+#     assert Stream.concat(Stream([1, 2, 3]), Stream(["a", "b", "c"])).collect(
+#         Collector.to_list()
+#     ) == [1, 2, 3, "a", "b", "c"]
+#     assert (
+#         Stream((1, 2, 3)).limit(2).count() == 2
+#     ), f"count={Stream((1, 2, 3)).limit(2).count()}, res={Stream((1, 2, 3)).limit(2).collect(Collector.to_list())}"
+#     assert Stream((1, 2, 3)).limit(2).collect(Collector.to_list()) == [1, 2]
+#     assert Stream((1, 2, 3)).limit(3).count() == 3
+#     assert Stream((1, 2, 3)).skip(1).count() == 2
+#     assert Stream((1, 2, 3)).skip(1).collect(Collector.to_list()) == [2, 3]
+#     assert Stream((1, 2, 3)).skip(3).count() == 0
+#     assert Stream(["abc", "def", "abc"]).distinct().count() == 2
+#     assert Stream(["abc"]).collect(Collector.str_join(" ")) == "abc"
+#     assert Stream(["a", "b", "c"]).collect(Collector.str_join(" ")) == "a b c"

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.9.0] - 28.12.2023
 
+This version brings new modules and methods, some cleanup and type hints
+
 ### Added
 
 - ``decorators``: added the ``deprecated`` decorator for marking deprecated functions/classes
@@ -18,9 +20,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - ``cli_ui``: refactored to not have to use ``eval``
 - ``execute``: added some type hints
+- ``fsdb``: rolled back migration from ``eval`` to ``ast.literal_eval`` because it wasn't equivalent for parsing lambdas properly
 - ``mediainfo``: begun a major rewrite, centered around the switch to MediaInfo's JSON output to simplify parsing /!\ breaking changes, with more to come
 - ``path_tools``: major rewrite of ``make_FS_safe`` to more reliably avoid problematic names
 - ``utils``: diversified LOG formats (/!\ breaking change ``LOG_FORMAT -> LOG_FORMAT_EXTENDED``)
+
+### Removed
+
+- ``decorators``: commented out cacheFS => should not be used anymore because relies on the pickle module which poses security risks
 
 ## [0.8.0] - 06.08.2023
 

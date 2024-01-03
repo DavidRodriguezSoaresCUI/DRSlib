@@ -1,4 +1,4 @@
-# pylint: disable=eval-used, broad-except
+# pylint: disable=broad-except
 """
 Command line user interface
 ===========================
@@ -91,7 +91,7 @@ def user_input(
     prompt: str,
     accepted: Union[Iterable[Union[str, int]], Callable],
     default: Optional[Any] = None,
-) -> str:
+) -> str | int | float:
     """Asks user for input, with restrictions on accpetable values.
     `prompt`: appropriate text asking the user for input. Should be straightforward and informative about the kind of data that is asked
     `accepted`: either a function testing if the user input is acceptable, or an iterable containing all acceptable values
@@ -108,7 +108,7 @@ def user_input(
     elif prompt[-2:] != ": ":
         prompt += ": "
 
-    def acceptable_UI(ui: str) -> bool:
+    def acceptable_UI(ui: Any) -> bool:
         return accepted(ui) if callable(accepted) else (ui in accepted)
 
     while True:
@@ -162,7 +162,7 @@ def choose_from_list(choices: list, default: Optional[int] = None) -> Any:
 
 
 def select_action(
-    choices: Dict[str, dict[str, Union[str, Callable]]],
+    choices: Dict[str | int | float, dict[str, Union[str, Callable]]],
     no_banner: bool = False,
     default: Optional[str] = None,
     execute: bool = False,
@@ -186,7 +186,9 @@ def select_action(
         banner = one_line_banner("Selection menu")
         print(banner)
 
-    accepted_inputs = choices.keys()
+    accepted_inputs: list[int | str] = list(choices.keys())  # type: ignore[arg-type]
+    if any(isinstance(x, float) for x in accepted_inputs):
+        raise ValueError("accepted_inputs can only contain str|int, not float")
 
     # Print choices
     def choice_formatter(choice) -> str:
@@ -264,7 +266,7 @@ def cli_explorer(root_dir: Optional[Path] = None, allow_mkdir: bool = True) -> P
             return cwd  # type: ignore[return-value]
         elif next_dir == "<Make new folder here>":
             while True:
-                new_dir_name = user_input(
+                new_dir_name: str = user_input(  # type: ignore[assignment]
                     prompt="New folder name", accepted=lambda x: isinstance(x, str)
                 )
                 new_dir = cwd / make_FS_safe(new_dir_name.replace(".", ""))  # type: ignore[operator]
